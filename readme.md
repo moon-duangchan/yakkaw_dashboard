@@ -59,13 +59,25 @@ go run main.go
 The server will be running at `http://localhost:8080`.
 
 ## API Endpoints
-| Method | Endpoint      | Description          |
-|--------|--------------|----------------------|
-| GET    | `/api/users` | Get all users       |
-| POST   | `/api/users` | Create a new user   |
-| GET    | `/api/users/:id` | Get user by ID  |
-| PUT    | `/api/users/:id` | Update user by ID |
-| DELETE | `/api/users/:id` | Delete user by ID |
+### Public Routes
+| Method | Endpoint           | Description |
+|--------|-------------------|-------------|
+| POST   | `/register`       | User registration |
+| POST   | `/login`          | User login |
+| GET    | `/sponsors`       | Get list of sponsors |
+| GET    | `/notifications`  | Get all notifications |
+| GET    | `/me`             | Get logged-in user info |
+
+### Admin Routes (Protected by JWT Middleware)
+| Method | Endpoint                     | Description |
+|--------|-----------------------------|-------------|
+| GET    | `/admin/dashboard`          | Admin dashboard |
+| POST   | `/admin/notifications`      | Create a notification |
+| PUT    | `/admin/notifications/:id`  | Update a notification |
+| DELETE | `/admin/notifications/:id`  | Delete a notification |
+| POST   | `/admin/sponsors`           | Create a sponsor |
+| PUT    | `/admin/sponsors/:id`       | Update a sponsor |
+| DELETE | `/admin/sponsors/:id`       | Delete a sponsor |
 
 ## Running with Docker (Optional)
 ### Build and Run Docker Containers
@@ -85,4 +97,3 @@ This project is licensed under the MIT License.
 
 ## Contact
 For any questions or inquiries, feel free to contact me via GitHub Issues or email.
-
