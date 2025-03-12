@@ -27,10 +27,6 @@ const getCookie = (name: string) => {
   return match ? decodeURIComponent(match[2]) : null;
 };
 
-// ฟังก์ชันสำหรับลบ Cookie
-const deleteCookie = (name: string) => {
-  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;`;
-};
 
 const Navbar = () => {
   const [username, setUsername] = useState("");
@@ -42,11 +38,22 @@ const Navbar = () => {
     setUsername(storedUsername);
   }, []);
 
-  const handleLogout = () => {
-    deleteCookie("access_token"); // ลบ token
-    deleteCookie("username"); // ลบ username
-    router.replace("/login");
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/logout", { // ✅ ตรวจสอบว่า Port ถูกต้อง
+        method: "POST",
+        credentials: "include", // ✅ ให้ Cookie ถูกส่งไปด้วย
+      });
+  
+      if (!res.ok) throw new Error("Logout failed");
+  
+      router.replace("/login"); // ✅ กลับไปหน้า Login
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
+  
+  
 
   const NavLinks = () => (
     <>
