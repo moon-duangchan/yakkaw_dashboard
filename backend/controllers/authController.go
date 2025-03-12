@@ -63,13 +63,15 @@ func Logout(c echo.Context) error {
 	cookie.Name = "access_token"
 	cookie.Value = ""
 	cookie.HttpOnly = true
-	cookie.Secure = true
+	cookie.Secure = true  // ต้องใช้ HTTPS
 	cookie.Path = "/"
-	cookie.Expires = time.Now().Add(-time.Hour) // Expire immediately
+	cookie.Expires = time.Unix(0, 0) // หมดอายุทันที
+	cookie.MaxAge = -1               // บังคับให้ลบ
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Logged out successfully"})
 }
+
 
 // Register - Creates a new user
 func Register(c echo.Context) error {

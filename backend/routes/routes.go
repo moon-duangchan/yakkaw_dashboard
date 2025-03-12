@@ -10,6 +10,7 @@ func Init(e *echo.Echo) {
 	// Public Routes
 	e.POST("/register", controllers.Register)
 	e.POST("/login", controllers.Login)
+	e.POST("/logout", controllers.Logout)
 
 	// Protected Admin Routes
 	adminGroup := e.Group("/admin")
