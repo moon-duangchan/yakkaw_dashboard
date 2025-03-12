@@ -8,6 +8,6 @@ type Notification struct {
     Title   string `json:"title"`
     Message string `json:"message"`
     ID      uint   `json:"id"`
-    // Optionally add 'Icon' as a string path for image URL
+    Category string `json:"category"`
     Icon    string `json:"icon,omitempty"`
 }

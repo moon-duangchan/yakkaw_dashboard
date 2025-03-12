@@ -49,6 +49,7 @@ func GetNotifications(c echo.Context) error {
 			"id":      notification.ID,
 			"title":   notification.Title,
 			"message": notification.Message,
+			"category": notification.Category,
 			"time":    timeAgo,
 			"icon":    notification.Icon, // หากไม่อยากแสดง icon ก็ไม่ต้องส่งออก
 		})
@@ -115,6 +116,7 @@ func UpdateNotification(c echo.Context) error {
 	notification.Title = updatedNotification.Title
 	notification.Message = updatedNotification.Message
 	notification.Icon = updatedNotification.Icon
+	notification.Category = updatedNotification.Category
 
 	if err := database.DB.Save(&notification).Error; err != nil {
 		c.Logger().Error(err) 
