@@ -1,10 +1,11 @@
 package controllers
 
 import (
-    "net/http"
+	"net/http"
 
-    "github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4"
 
+	"yakkaw_dashboard/database"
 	"yakkaw_dashboard/services"
 )
 
@@ -48,4 +49,30 @@ func (ctl *AirQualityController) GetOneYearDataHandler(c echo.Context) error {
         return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
     }
     return c.JSON(http.StatusOK, data)
+}
+
+
+// GetLatestAirQuality ดึงค่า AQI และ timestamp ล่าสุดสำหรับจังหวัดที่ระบุ
+func GetLatestAirQuality(c echo.Context) error {
+    province := c.QueryParam("province")
+    var result struct {
+        AQI       int   `json:"aqi"`
+        Timestamp int64 `json:"timestamp"`
+    }
+
+    // สร้าง query สำหรับดึง record ล่าสุดจาก sensor_data โดยกรองด้วย address ที่มีชื่อจังหวัด
+    query := "SELECT aqi, timestamp FROM sensor_data WHERE 1=1"
+    args := []interface{}{}
+    if province != "" {
+        query += " AND address ILIKE ?"
+        args = append(args, "%"+province+"%")
+    }
+    query += " ORDER BY timestamp DESC LIMIT 1"
+
+    row := database.DB.Raw(query, args...).Row()
+    if err := row.Scan(&result.AQI, &result.Timestamp); err != nil {
+        return c.JSON(http.StatusNotFound, map[string]string{"message": "Not Found"})
+    }
+
+    return c.JSON(http.StatusOK, result)
 }

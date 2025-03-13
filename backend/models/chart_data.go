@@ -6,5 +6,6 @@ type ChartData struct {
 }
 
 type DatasetChart struct {
+	Label string	`json:"label" gorm:"type:json"`
     Data []float64 `json:"data" gorm:"type:json"`
 }

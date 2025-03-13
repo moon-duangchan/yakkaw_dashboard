@@ -47,4 +47,6 @@ func Init(e *echo.Echo) {
 	chartDataController := controllers.NewChartDataController()
 	e.GET("/api/chartdata", chartDataController.GetChartDataHandler)
 
+	e.GET("/api/airquality/latest", controllers.GetLatestAirQuality)
+
 }
