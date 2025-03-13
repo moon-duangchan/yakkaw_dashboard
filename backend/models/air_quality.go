@@ -36,7 +36,7 @@ type SensorData struct {
 
 
 type APIResponse struct {
-    Status   int          `json:"status"`
-    Error    interface{}  `json:"error"`
-    Response []SensorData `json:"response"`
+    Status   int             `json:"status" gorm:"-"`
+    Error    interface{}     `json:"error" gorm:"-"`
+    Response []SensorData    `json:"response" gorm:"-"`
 }

@@ -5,10 +5,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"yakkaw_dashboard/database"
 	"yakkaw_dashboard/models"
-
 )
 
 // FetchAndStoreData ดึงข้อมูลจาก API แล้วเก็บลง DB (ด้วย Raw SQL ผ่าน GORM)
@@ -63,56 +63,134 @@ func FetchAndStoreData(apiURL string) {
 	}
 }
 
-// ------------------------------------
-// ตัวอย่างฟังก์ชัน Query ข้อมูลเฉลี่ยตามช่วงเวลา (Raw SQL ผ่าน GORM)
-// ------------------------------------
-
-// GetAirQualityOneWeek ค่าเฉลี่ย 1 สัปดาห์
-func GetAirQualityOneWeek() ([]map[string]interface{}, error) {
+// GetAirQuality24Hours ค่าเฉลี่ย 24 ชั่วโมง พร้อมระบุช่วงเวลาที่ใช้ดึงข้อมูล
+func GetAirQuality24Hours() (map[string]interface{}, error) {
 	query := `
         SELECT address, AVG(pm25) AS avg_pm25, AVG(pm10) AS avg_pm10
         FROM sensor_data
-        WHERE to_timestamp(timestamp/1000) >= now() - interval '7 days'
+        WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '24 hours' AND now()
         GROUP BY address
     `
-	return queryAirQuality(query)
+	data, err := queryAirQuality(query)
+	if err != nil {
+		return nil, err
+	}
+
+	current := time.Now()
+	past := current.Add(-24 * time.Hour)
+
+	response := map[string]interface{}{
+		"current_date": current,
+		"past_date":    past,
+		"data":         data,
+	}
+
+	return response, nil
 }
 
-func GetAirQualityOneMonth() ([]map[string]interface{}, error) {
+// GetAirQualityOneMonth ค่าเฉลี่ย 1 เดือน พร้อมระบุช่วงเวลาที่ใช้ดึงข้อมูล
+func GetAirQualityOneMonth() (map[string]interface{}, error) {
 	query := `
         SELECT address, AVG(pm25) AS avg_pm25, AVG(pm10) AS avg_pm10
         FROM sensor_data
-        WHERE to_timestamp(timestamp/1000) >= now() - interval '1 month'
+        WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '1 month' AND now()
         GROUP BY address
     `
-	return queryAirQuality(query)
+	data, err := queryAirQuality(query)
+	if err != nil {
+		return nil, err
+	}
+
+	current := time.Now()
+	// ใช้ AddDate เพื่อหาค่ากลับไป 1 เดือน
+	past := current.AddDate(0, -1, 0)
+
+	response := map[string]interface{}{
+		"current_date": current,
+		"past_date":    past,
+		"data":         data,
+	}
+
+	return response, nil
 }
 
-func GetAirQualityThreeMonths() ([]map[string]interface{}, error) {
+// GetAirQualityThreeMonths ค่าเฉลี่ย 3 เดือน พร้อมระบุช่วงเวลาที่ใช้ดึงข้อมูล
+func GetAirQualityThreeMonths() (map[string]interface{}, error) {
 	query := `
         SELECT address, AVG(pm25) AS avg_pm25, AVG(pm10) AS avg_pm10
         FROM sensor_data
-        WHERE to_timestamp(timestamp/1000) >= now() - interval '3 months'
+        WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '3 months' AND now()
         GROUP BY address
     `
-	return queryAirQuality(query)
+	data, err := queryAirQuality(query)
+	if err != nil {
+		return nil, err
+	}
+
+	current := time.Now()
+	past := current.AddDate(0, -3, 0)
+
+	response := map[string]interface{}{
+		"current_date": current,
+		"past_date":    past,
+		"data":         data,
+	}
+
+	return response, nil
 }
 
-func GetAirQualityOneYear() ([]map[string]interface{}, error) {
+// GetAirQualityOneYear ค่าเฉลี่ย 1 ปี พร้อมระบุช่วงเวลาที่ใช้ดึงข้อมูล
+func GetAirQualityOneYear() (map[string]interface{}, error) {
 	query := `
         SELECT address, AVG(pm25) AS avg_pm25, AVG(pm10) AS avg_pm10
         FROM sensor_data
-        WHERE to_timestamp(timestamp/1000) >= now() - interval '1 year'
+        WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '1 year' AND now()
         GROUP BY address
     `
-	return queryAirQuality(query)
+	data, err := queryAirQuality(query)
+	if err != nil {
+		return nil, err
+	}
+
+	current := time.Now()
+	past := current.AddDate(-1, 0, 0)
+
+	response := map[string]interface{}{
+		"current_date": current,
+		"past_date":    past,
+		"data":         data,
+	}
+
+	return response, nil
 }
 
-// ------------------------------------
+// GetAirQualityOneWeek ค่าเฉลี่ย 1 สัปดาห์ พร้อมระบุช่วงเวลาที่ใช้ดึงข้อมูล
+func GetAirQualityOneWeek() (map[string]interface{}, error) {
+	query := `
+        SELECT address, AVG(pm25) AS avg_pm25, AVG(pm10) AS avg_pm10
+        FROM sensor_data
+        WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '7 days' AND now()
+        GROUP BY address
+    `
+	data, err := queryAirQuality(query)
+	if err != nil {
+		return nil, err
+	}
+
+	current := time.Now()
+	past := current.AddDate(0, 0, -7)
+
+	response := map[string]interface{}{
+		"current_date": current,
+		"past_date":    past,
+		"data":         data,
+	}
+
+	return response, nil
+}
+
 // ฟังก์ชันช่วยสำหรับ Query (Raw SQL) ผ่าน GORM
-// ------------------------------------
 func queryAirQuality(query string) ([]map[string]interface{}, error) {
-	// 1) เรียก Raw(...) เพื่อดึง *sql.Rows
 	rows, err := database.DB.Raw(query).Rows()
 	if err != nil {
 		return nil, err
@@ -121,7 +199,6 @@ func queryAirQuality(query string) ([]map[string]interface{}, error) {
 
 	results := []map[string]interface{}{}
 
-	// 2) สแกนค่าจาก rows (แบบเดียวกับ database/sql)
 	for rows.Next() {
 		var address string
 		var avgPM25 float64
