@@ -249,7 +249,7 @@ const LoginPage = () => {
         </Card>
         
         <p className="text-center text-xs text-gray-500 mt-8">
-          © {new Date().getFullYear()} YourApp. All rights reserved.
+          © {new Date().getFullYear()} YAKKAW. All rights reserved.
         </p>
       </div>
     </div>
