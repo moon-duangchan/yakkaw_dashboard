@@ -35,7 +35,12 @@ func Init(e *echo.Echo) {
 	// Admin-only 
 	adminGroup.POST("/categories", categoryController.CreateCategory)
 	adminGroup.POST("/news", newsController.CreateNews)
-
+	adminGroup.GET("/categories", categoryController.GetCategories)
+	adminGroup.GET("/categories/:id", categoryController.GetCategoryByID)
+	adminGroup.GET("/news", newsController.GetNews)
+	adminGroup.GET("/news/:id", newsController.GetNewsByID)
+	adminGroup.DELETE("/categories/:id", categoryController.DeleteCategory)
+	adminGroup.DELETE("/news/:id", newsController.DeleteNews)
 	adminGroup.GET("/dashboard", controllers.AdminDashboard)
 	adminGroup.POST("/notifications", controllers.CreateNotification)
 	adminGroup.PUT("/notifications/:id", controllers.UpdateNotification)

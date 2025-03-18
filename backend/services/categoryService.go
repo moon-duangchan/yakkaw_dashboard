@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"yakkaw_dashboard/models"
 
 	"gorm.io/gorm"
@@ -24,17 +25,17 @@ func (s *CategoryService) CreateCategory(category models.Category) (models.Categ
 }
 
 // GetAllCategories returns all categories, optionally with News
-func (s *CategoryService) GetAllCategories(preloadNews bool) ([]models.Category, error) {
+func (s *CategoryService) GetAllCategories() ([]models.Category, error) {
     var categories []models.Category
-    query := s.DB
-    if preloadNews {
-        query = query.Preload("News")
-    }
-    if err := query.Find(&categories).Error; err != nil {
+
+    // ✅ โหลด Category พร้อม News แต่ไม่ preload category ของ news
+    if err := s.DB.Preload("News").Find(&categories).Error; err != nil {
         return nil, err
     }
+
     return categories, nil
 }
+
 
 // GetCategoryByID fetches a single category by ID
 func (s *CategoryService) GetCategoryByID(id uint) (models.Category, error) {
@@ -43,4 +44,12 @@ func (s *CategoryService) GetCategoryByID(id uint) (models.Category, error) {
         return models.Category{}, err
     }
     return category, nil
+}
+
+func (s *CategoryService) DeleteCategory(id uint) error {
+    result := s.DB.Delete(&models.Category{}, id)
+    if result.RowsAffected == 0 {
+        return errors.New("category not found")
+    }
+    return nil
 }

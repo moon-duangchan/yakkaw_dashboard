@@ -38,13 +38,14 @@ func (nc *NewsController) CreateNews(c echo.Context) error {
 
 // GetNews (PUBLIC) สำหรับดึงข่าวทั้งหมด
 func (nc *NewsController) GetNews(c echo.Context) error {
-	// ส่ง preloadCategory เป็น false หากไม่ต้องการโหลดข้อมูล Category ร่วมด้วย
-	newsList, err := nc.Service.GetAllNews(false)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-	}
-	return c.JSON(http.StatusOK, newsList)
+    newsList, err := nc.Service.GetAllNews()
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+    }
+    return c.JSON(http.StatusOK, newsList)
 }
+
+
 
 // GetNewsByID สำหรับดึงข่าวตาม ID
 func (nc *NewsController) GetNewsByID(c echo.Context) error {
@@ -57,4 +58,18 @@ func (nc *NewsController) GetNewsByID(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "news not found"})
 	}
 	return c.JSON(http.StatusOK, newsItem)
+}
+
+func (cc *NewsController) DeleteNews(c echo.Context) error {
+    id, err := strconv.Atoi(c.Param("id"))
+    if err != nil {
+        return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid news id"})
+    }
+
+    err = cc.Service.DeleteNews(uint(id))
+    if err != nil {
+        return c.JSON(http.StatusNotFound, map[string]string{"message": "Not Found"})
+    }
+
+    return c.JSON(http.StatusOK, map[string]string{"message": "News deleted successfully"})
 }
