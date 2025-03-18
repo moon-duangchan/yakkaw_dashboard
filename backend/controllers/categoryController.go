@@ -67,3 +67,24 @@ func (cc *CategoryController) DeleteCategory(c echo.Context) error {
 
     return c.JSON(http.StatusOK, map[string]string{"message": "Category deleted successfully"})
 }
+
+// UpdateCategory (ADMIN ONLY) สำหรับอัปเดตข้อมูลหมวดหมู่
+func (cc *CategoryController) UpdateCategory(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid category id"})
+	}
+
+	var categoryUpdate models.Category
+	if err := c.Bind(&categoryUpdate); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	// อัปเดตหมวดหมู่
+	updatedCategory, err := cc.Service.UpdateCategory(uint(id), categoryUpdate)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, updatedCategory)
+}

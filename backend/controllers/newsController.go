@@ -73,3 +73,24 @@ func (cc *NewsController) DeleteNews(c echo.Context) error {
 
     return c.JSON(http.StatusOK, map[string]string{"message": "News deleted successfully"})
 }
+
+// UpdateNews (ADMIN ONLY) สำหรับอัปเดตข้อมูลข่าว
+func (nc *NewsController) UpdateNews(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid news id"})
+	}
+
+	var newsUpdate models.News
+	if err := c.Bind(&newsUpdate); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	// อัปเดตข่าว
+	updatedNews, err := nc.Service.UpdateNews(uint(id), newsUpdate)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, updatedNews)
+}

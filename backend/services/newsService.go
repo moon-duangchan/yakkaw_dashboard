@@ -65,3 +65,37 @@ func (s *NewsService) DeleteNews(id uint) error {
     }
     return nil
 }
+
+// UpdateNews updates an existing news entry
+func (s *NewsService) UpdateNews(id uint, newsUpdate models.News) (models.News, error) {
+    var news models.News
+
+    // ค้นหาข่าวที่ต้องการอัปเดต
+    if err := s.DB.First(&news, id).Error; err != nil {
+        return models.News{}, errors.New("news not found")
+    }
+
+    // อัปเดตค่าข้อมูล
+    news.Title = newsUpdate.Title
+    news.Description = newsUpdate.Description
+    news.Image = newsUpdate.Image
+    news.URL = newsUpdate.URL
+    news.CategoryID = newsUpdate.CategoryID
+
+    // อัปเดตวันที่ถ้าไม่ได้ระบุมา
+    if newsUpdate.Date.IsZero() {
+        news.Date = time.Now()
+    } else {
+        news.Date = newsUpdate.Date
+    }
+
+    // บันทึกการเปลี่ยนแปลง
+    if err := s.DB.Save(&news).Error; err != nil {
+        return models.News{}, err
+    }
+
+    // โหลดข้อมูลหมวดหมู่ที่อัปเดต
+    s.DB.Preload("Category").First(&news, id)
+
+    return news, nil
+}

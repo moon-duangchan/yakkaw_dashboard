@@ -53,3 +53,23 @@ func (s *CategoryService) DeleteCategory(id uint) error {
     }
     return nil
 }
+
+// UpdateCategory updates an existing category entry
+func (s *CategoryService) UpdateCategory(id uint, categoryUpdate models.Category) (models.Category, error) {
+    var category models.Category
+
+    // ค้นหาหมวดหมู่ที่ต้องการอัปเดต
+    if err := s.DB.First(&category, id).Error; err != nil {
+        return models.Category{}, errors.New("category not found")
+    }
+
+    // อัปเดตค่าข้อมูล
+    category.Name = categoryUpdate.Name
+
+    // บันทึกการเปลี่ยนแปลง
+    if err := s.DB.Save(&category).Error; err != nil {
+        return models.Category{}, err
+    }
+
+    return category, nil
+}
