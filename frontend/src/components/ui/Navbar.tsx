@@ -59,6 +59,7 @@ const Navbar = () => {
         { href: "/notifications", icon: Bell, label: "Notifications" },
         { href: "/sponsor", icon: Gift, label: "Sponsor" },
         { href: "/news", icon: Newspaper, label: "News" },
+        { href: "/categories", icon: Newspaper, label: "Categories" },
       ].map((link, index) => (
         <Link key={index} href={link.href}>
           <motion.div
@@ -81,6 +82,7 @@ const Navbar = () => {
         { href: "/notifications", icon: Bell, label: "Notifications", color: "purple" },
         { href: "/sponsor", icon: Gift, label: "Sponsor", color: "pink" },
         { href: "/news", icon: Newspaper, label: "News", color: "blue" },
+        { href: "/categories", icon: Newspaper, label: "Categories", color: "purple" },
       ].map((link, index) => (
         <Link key={index} href={link.href}>
           <motion.div
