@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, Bell, Settings, LogOut, Home, Gift, Users } from "lucide-react";
+import { Menu, Bell, Settings, LogOut, Home, Gift, Users, Newspaper } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +58,7 @@ const Navbar = () => {
         { href: "/dashboard", icon: Home, label: "Dashboard" },
         { href: "/notifications", icon: Bell, label: "Notifications" },
         { href: "/sponsor", icon: Gift, label: "Sponsor" },
+        { href: "/news", icon: Newspaper, label: "News" },
       ].map((link, index) => (
         <Link key={index} href={link.href}>
           <motion.div
@@ -79,6 +80,7 @@ const Navbar = () => {
         { href: "/dashboard", icon: Home, label: "Dashboard", color: "indigo" },
         { href: "/notifications", icon: Bell, label: "Notifications", color: "purple" },
         { href: "/sponsor", icon: Gift, label: "Sponsor", color: "pink" },
+        { href: "/news", icon: Newspaper, label: "News", color: "blue" },
       ].map((link, index) => (
         <Link key={index} href={link.href}>
           <motion.div
