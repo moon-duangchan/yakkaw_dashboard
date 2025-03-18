@@ -38,6 +38,6 @@ func Init() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	DB.AutoMigrate(&models.Notification{},&models.User{},&models.Sponsor{},&models.SensorData{},&models.APIResponse{},&models.ChartData{},models.DatasetChart{}) 
+	DB.AutoMigrate(&models.Notification{},&models.User{},&models.Sponsor{},&models.SensorData{},&models.APIResponse{},&models.ChartData{},models.DatasetChart{},&models.Category{}, &models.News{}) 
 	fmt.Println("Database connection successfully established and migrations applied")
 }
