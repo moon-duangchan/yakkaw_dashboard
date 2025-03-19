@@ -31,38 +31,38 @@ export const SponsorsCard: React.FC<SponsorsCardProps> = ({
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="bg-white rounded-lg overflow-hidden border border-slate-100 shadow-md hover:shadow-md transition-all duration-200 flex flex-col"
+      className="bg-white rounded-lg overflow-hidden border border-amber-100 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
     >
       <CardHeader className="flex flex-row items-center justify-between pb-2 border-b-4 border-amber-500">
         <div className="flex items-center gap-3">
-          <CardTitle className="text-lg font-medium">
+          <CardTitle className="text-lg font-medium text-amber-800">
             {Sponsors.name}
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-amber-500 mt-2">
               {new Date().toLocaleDateString()}
             </p>
           </CardTitle>
         </div>
         <div className="flex gap-1">
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button variant="ghost" size="icon" onClick={onEdit}>
+            <Button variant="ghost" size="icon" onClick={onEdit} className="text-amber-600 hover:text-amber-800 hover:bg-amber-50">
               <Pencil size={16} />
             </Button>
           </motion.div>
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button variant="ghost" size="icon" onClick={onDelete}>
+            <Button variant="ghost" size="icon" onClick={onDelete} className="text-amber-600 hover:text-amber-800 hover:bg-amber-50">
               <Trash2 size={16} />
             </Button>
           </motion.div>
         </div>
       </CardHeader>
       <CardContent className="pt-4 flex-grow">
-        <p className="text-sm text-slate-600 mb-2 break-words whitespace-normal">
+        <p className="text-sm text-amber-700 mb-2 break-words whitespace-normal">
           {isExpanded ? Sponsors.description : truncatedDescription}
         </p>
         {shouldTruncate && (
           <Button
             variant="link"
-            className="p-0 h-auto text-yellow-600 hover:text-yellow-800"
+            className="p-0 h-auto text-amber-600 hover:text-amber-800"
             onClick={toggleExpand}
           >
             {isExpanded ? "Read Less" : "Read More"}
@@ -75,7 +75,7 @@ export const SponsorsCard: React.FC<SponsorsCardProps> = ({
             <motion.img
               src={Sponsors.logo}
               alt={Sponsors.name}
-              className="w-[200px] h-[100px] rounded-md border-2 border-slate-200 object-contain"
+              className="w-[200px] h-[100px] rounded-md border-2 border-amber-200 object-contain shadow-md hover:shadow-lg transition-all duration-300"
             />
           </div>
         </CardFooter>

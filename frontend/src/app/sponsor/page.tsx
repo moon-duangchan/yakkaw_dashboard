@@ -67,7 +67,7 @@ const SponsorsPage: React.FC = () => {
   return (
     <>
       <Navbar/>
-      <div className="bg-slate-50 min-h-screen">
+      <div className="bg-gradient-to-b from-amber-50 to-yellow-50 min-h-screen">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,10 +76,10 @@ const SponsorsPage: React.FC = () => {
         >
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800">
+              <h1 className="text-3xl font-bold text-amber-800">
                 Manage Sponsors
               </h1>
-              <p className="text-slate-500 mt-1">
+              <p className="text-amber-600 mt-1">
                 Manage of Sponsors for Post, Edit and Delete
               </p>
             </div>

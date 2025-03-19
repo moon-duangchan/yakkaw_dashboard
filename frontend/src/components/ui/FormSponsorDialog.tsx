@@ -16,9 +16,9 @@ export const FormDialog: React.FC<SponsorFormDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="border-amber-100">
         <DialogHeader>
-          <DialogTitle>{name}</DialogTitle>
+          <DialogTitle className="text-amber-800">{name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <Input
@@ -26,22 +26,27 @@ export const FormDialog: React.FC<SponsorFormDialogProps> = ({
             value={Sponsors.name}
             onChange={(e) => setSponsors({ ...Sponsors, name: e.target.value })}
             required
+            className="border-amber-200 focus:border-amber-500 focus:ring-amber-500"
           />
           <Textarea
             placeholder="Description"
             value={Sponsors.description}
             onChange={(e) => setSponsors({ ...Sponsors, description: e.target.value })}
             required
+            className="border-amber-200 focus:border-amber-500 focus:ring-amber-500"
           />
           <Input
             placeholder="Image URL"
             value={Sponsors.logo}
             onChange={(e) => setSponsors({ ...Sponsors, logo: e.target.value })}
             required
+            className="border-amber-200 focus:border-amber-500 focus:ring-amber-500"
           />
           <DialogFooter>
             {/* <Button type="submit" onClick={() => onOpenChange(false)}>Cancel</Button> */}
-            <Button type="submit" className="bg-amber-500 hover:bg-amber-700">{submitButtonText}</Button>
+            <Button type="submit" className="bg-amber-500 hover:bg-amber-700 text-white">
+              {submitButtonText}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
