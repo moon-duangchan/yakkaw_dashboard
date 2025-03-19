@@ -74,20 +74,32 @@ const CategoryPage: React.FC = () => {
 
           <AnimatePresence>
             <motion.div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {categories.map((category) => (
-                <CategoryCard
-                  key={category.id}
-                  category={category}
-                  onEdit={() => {
-                    setCurrentCategory(category);
-                    setIsEditDialogOpen(true);
-                  }}
-                  onDelete={() => {
-                    setCategoryToDelete(category.id);
-                    setIsConfirmDialogOpen(true);
-                  }}
-                />
-              ))}
+              {categories.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="col-span-full text-center p-10 bg-white rounded-lg shadow-sm border border-slate-100"
+                >
+                  <h3 className="text-lg font-medium text-slate-700">
+                    No Categories found
+                  </h3>
+                </motion.div>
+              ) : (
+                categories.map((category) => (
+                  <CategoryCard
+                    key={category.id}
+                    category={category}
+                    onEdit={() => {
+                      setCurrentCategory(category);
+                      setIsEditDialogOpen(true);
+                    }}
+                    onDelete={() => {
+                      setCategoryToDelete(category.id);
+                      setIsConfirmDialogOpen(true);
+                    }}
+                  />
+                ))
+              )}
             </motion.div>
           </AnimatePresence>
         </motion.div>
