@@ -78,9 +78,9 @@ const CategoryPage: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="col-span-full text-center p-10 bg-white rounded-lg shadow-lg border border-slate-100"
+                  className="col-span-full text-center p-10 bg-white rounded-lg shadow-lg border border-green-100"
                 >
-                  <h3 className="text-lg font-medium text-slate-700">
+                  <h3 className="text-lg font-medium text-green-700">
                     No Categories found
                   </h3>
                 </motion.div>
