@@ -69,7 +69,7 @@ const NotificationPage: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-slate-50 min-h-screen">
+      <div className="bg-gradient-to-b from-blue-50 to-indigo-50 min-h-screen">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -78,15 +78,15 @@ const NotificationPage: React.FC = () => {
         >
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800">
+              <h1 className="text-3xl font-bold text-blue-800">
                 Manage Notification
               </h1>
-              <p className="text-slate-500 mt-1">
+              <p className="text-blue-600 mt-1">
                 Manage of Notification for Post, Edit and Delete
               </p>
             </div>
             <Button
-              className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-700"
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-700"
               onClick={() => setIsCreateDialogOpen(true)}
             >
               <Plus size={16} /> Add Notification
