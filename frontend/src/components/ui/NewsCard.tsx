@@ -24,38 +24,38 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news, onEdit, onDelete }) =>
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="bg-white rounded-lg overflow-hidden border border-slate-100 shadow-md hover:shadow-md transition-all duration-200 flex flex-col"
+      className="bg-white rounded-lg overflow-hidden border border-purple-100 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
     >
-      <CardHeader className="flex flex-row items-center justify-between pb-2 border-b-4 border-amber-500">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 border-b-4 border-purple-500">
         <div className="flex items-center gap-3">
-          <CardTitle className="text-lg font-medium">
+          <CardTitle className="text-lg font-medium text-purple-800">
             {news.title}
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-purple-500 mt-2">
               {new Date(news.date).toLocaleDateString()}
             </p>
           </CardTitle>
         </div>
         <div className="flex gap-1">
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button variant="ghost" size="icon" onClick={onEdit}>
+            <Button variant="ghost" size="icon" onClick={onEdit} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50">
               <Pencil size={16} />
             </Button>
           </motion.div>
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <Button variant="ghost" size="icon" onClick={onDelete}>
+            <Button variant="ghost" size="icon" onClick={onDelete} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50">
               <Trash2 size={16} />
             </Button>
           </motion.div>
         </div>
       </CardHeader>
       <CardContent className="pt-4 flex-grow">
-        <p className="text-sm text-slate-600 mb-2 break-words whitespace-normal">
+        <p className="text-sm text-purple-700 mb-2 break-words whitespace-normal">
           {isExpanded ? news.description : truncatedDescription}
         </p>
         {shouldTruncate && (
           <Button
             variant="link"
-            className="p-0 h-auto text-yellow-600 hover:text-yellow-800"
+            className="p-0 h-auto text-purple-600 hover:text-purple-800"
             onClick={toggleExpand}
           >
             {isExpanded ? "Read Less" : "Read More"}
@@ -68,7 +68,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ news, onEdit, onDelete }) =>
             <motion.img
               src={news.image}
               alt={news.title}
-              className="w-[200px] h-[100px] rounded-md border-2 border-slate-200 object-contain"
+              className="w-[200px] h-[100px] rounded-md border-2 border-purple-200 object-contain shadow-md hover:shadow-lg transition-all duration-300"
             />
           </div>
         </CardFooter>

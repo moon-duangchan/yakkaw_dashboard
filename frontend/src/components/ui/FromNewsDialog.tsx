@@ -17,9 +17,9 @@ export const FormDialog: React.FC<NewsFormDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="border-purple-100">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="text-purple-800">{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <Input
@@ -27,31 +27,35 @@ export const FormDialog: React.FC<NewsFormDialogProps> = ({
             value={news.title}
             onChange={(e) => setNews({ ...news, title: e.target.value })}
             required
+            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
           />
           <Textarea
             placeholder="Description"
             value={news.description}
             onChange={(e) => setNews({ ...news, description: e.target.value })}
             required
+            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
           />
           <Input
             placeholder="Image URL"
             value={news.image}
             onChange={(e) => setNews({ ...news, image: e.target.value })}
             required
+            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
           />
           <Input
             placeholder="News URL"
             value={news.url}
             onChange={(e) => setNews({ ...news, url: e.target.value })}
             required
+            className="border-purple-200 focus:border-purple-500 focus:ring-purple-500"
           />
           {/* ✅ Dropdown สำหรับเลือก Category */}
           <select
             value={news.category_id}
             onChange={(e) => setNews({ ...news, category_id: e.target.value })}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 border border-purple-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
           >
             <option value="">Select Category</option>
             {categories.map((category) => (
@@ -61,7 +65,7 @@ export const FormDialog: React.FC<NewsFormDialogProps> = ({
             ))}
           </select>
           <DialogFooter>
-            <Button type="submit" className="bg-indigo-500 hover:bg-indigo-700">
+            <Button type="submit" className="bg-purple-500 hover:bg-purple-700 text-white">
               {submitButtonText}
             </Button>
           </DialogFooter>
