@@ -121,7 +121,7 @@ const LoginPage = () => {
           <div className="h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
           <CardHeader className="space-y-1 pb-4 pt-6">
             <CardTitle className="text-2xl font-bold text-center text-gray-800">
-              Welcome to Yakkaw Admin
+              Login Yakkaw Admin
             </CardTitle>
             <CardDescription className="text-center text-gray-600">
               Enter your credentials to access your account
