@@ -15,9 +15,9 @@ export const FormDialog: React.FC<CategoryFormDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="border-emerald-100">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="text-emerald-800">{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <Input
@@ -25,9 +25,10 @@ export const FormDialog: React.FC<CategoryFormDialogProps> = ({
             value={category.name}
             onChange={(e) => setCategory({ ...category, name: e.target.value })}
             required
+            className="border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500"
           />
           <DialogFooter>
-            <Button type="submit" className="bg-indigo-500 hover:bg-indigo-700">
+            <Button type="submit" className="bg-emerald-500 hover:bg-emerald-700 text-white">
               {submitButtonText}
             </Button>
           </DialogFooter>
