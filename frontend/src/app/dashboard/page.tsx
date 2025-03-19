@@ -11,11 +11,16 @@ import {
   Calendar, 
   ChevronUp, 
   ChevronDown,
-  BarChart as BarChartIcon,
-  Activity
+  BarChartIcon,
+  Activity,
+  Newspaper,
+  FolderOpen,
+  Gift
 } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotification";
 import { useSponsors } from "@/hooks/useSponsor";
+import { useNews } from "@/hooks/useNews";
+import { useCategories } from "@/hooks/useCategories";
 import Navbar from "@/components/ui/Navbar";
 import {
   BarChart,
@@ -31,10 +36,14 @@ import {
 } from "recharts";
 import DashNotificationCard from "@/components/ui/DashNotificationCard";
 import DashSponsorCard from "@/components/ui/DashSponsorsCard";
+import DashNewsCard from "@/components/ui/DashNewsCard";
+import DashCategoryCard from "@/components/ui/DashCategoryCard";
 
 const DashboardPage: React.FC = () => {
   const { filteredNotifications, isLoading: loadingNotifications } = useNotifications();
   const { filteredSponsors, isLoading: loadingSponsors } = useSponsors();
+  const { filteredNews, isLoading: loadingNews } = useNews();
+  const { categories, isLoading: loadingCategories } = useCategories();
 
   // Mock data for the charts (replace with real data from your API)
   const notificationTrends = [
@@ -73,7 +82,7 @@ const DashboardPage: React.FC = () => {
     show: { opacity: 1, y: 0 }
   };
 
-  if (loadingNotifications || loadingSponsors) {
+  if (loadingNotifications || loadingSponsors || loadingNews || loadingCategories) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
         <div className="bg-white p-8 rounded-xl shadow-lg flex flex-col items-center">
@@ -85,21 +94,11 @@ const DashboardPage: React.FC = () => {
     );
   }
 
-  // Calculated metrics for notifications
+  // Calculated metrics
   const todayNotifications = filteredNotifications.length;
-  const yesterdayNotifications = todayNotifications - 2; // Mock data - replace with actual calculation
-  const notificationChange = todayNotifications - yesterdayNotifications;
-  const notificationPercentChange = yesterdayNotifications 
-    ? ((notificationChange / yesterdayNotifications) * 100).toFixed(1) 
-    : "0";
-  
-  // Calculated metrics for sponsors
   const todaySponsors = filteredSponsors.length;
-  const yesterdaySponsors = todaySponsors - 1; // Mock data - replace with actual calculation
-  const sponsorChange = todaySponsors - yesterdaySponsors;
-  const sponsorPercentChange = yesterdaySponsors 
-    ? ((sponsorChange / yesterdaySponsors) * 100).toFixed(1) 
-    : "0";
+  const todayNews = filteredNews.length;
+  const totalCategories = categories.length;
 
   return (
     <>
@@ -112,7 +111,7 @@ const DashboardPage: React.FC = () => {
           className="max-w-7xl mx-auto"
         >
           {/* Header Section */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -135,46 +134,30 @@ const DashboardPage: React.FC = () => {
           </motion.div>
 
           {/* Stats Cards */}
-          <motion.div 
+          <motion.div
             variants={container}
             initial="hidden"
             animate="show"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           >
-            {/* Notification Metrics */}
+            {/* Notification Stats */}
             <motion.div variants={item}>
               <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow duration-300">
-                <div className="h-1 bg-indigo-500 w-full"></div>
+                <div className="h-1 bg-blue-500 w-full"></div>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-slate-500">
                     Notifications
                   </CardTitle>
-                  <Bell className="h-4 w-4 text-indigo-500" />
+                  <Bell className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <div className="text-3xl font-bold text-slate-800">
-                        {todayNotifications}
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Total notifications
-                      </p>
-                    </div>
-                    <div className={`flex items-center text-sm ${notificationChange >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                      {notificationChange >= 0 ? (
-                        <ChevronUp className="h-4 w-4 mr-1" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 mr-1" />
-                      )}
-                      {Math.abs(notificationPercentChange as any)}%
-                    </div>
-                  </div>
+                  <div className="text-2xl font-bold text-slate-800">{todayNotifications}</div>
+                  <p className="text-xs text-slate-500 mt-1">Total notifications</p>
                 </CardContent>
               </Card>
             </motion.div>
 
-            {/* Sponsor Metrics */}
+            {/* Sponsor Stats */}
             <motion.div variants={item}>
               <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div className="h-1 bg-amber-500 w-full"></div>
@@ -182,267 +165,157 @@ const DashboardPage: React.FC = () => {
                   <CardTitle className="text-sm font-medium text-slate-500">
                     Sponsors
                   </CardTitle>
-                  <Users className="h-4 w-4 text-amber-500" />
+                  <Gift className="h-4 w-4 text-amber-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <div className="text-3xl font-bold text-slate-800">
-                        {todaySponsors}
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Total sponsors
-                      </p>
-                    </div>
-                    <div className={`flex items-center text-sm ${sponsorChange >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                      {sponsorChange >= 0 ? (
-                        <ChevronUp className="h-4 w-4 mr-1" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 mr-1" />
-                      )}
-                      {Math.abs(sponsorPercentChange as any)}%
-                    </div>
-                  </div>
+                  <div className="text-2xl font-bold text-slate-800">{todaySponsors}</div>
+                  <p className="text-xs text-slate-500 mt-1">Total sponsors</p>
                 </CardContent>
               </Card>
             </motion.div>
-            
-            {/* Engagement Rate - Example additional stat */}
-            <motion.div variants={item}>
-              <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow duration-300">
-                <div className="h-1 bg-emerald-500 w-full"></div>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-500">
-                    Engagement Rate
-                  </CardTitle>
-                  <Activity className="h-4 w-4 text-emerald-500" />
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <div className="text-3xl font-bold text-slate-800">
-                        68%
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Average engagement
-                      </p>
-                    </div>
-                    <div className="flex items-center text-sm text-emerald-500">
-                      <ChevronUp className="h-4 w-4 mr-1" />
-                      5.2%
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-            
-            {/* Conversion Rate - Example additional stat */}
+
+            {/* News Stats */}
             <motion.div variants={item}>
               <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow duration-300">
                 <div className="h-1 bg-purple-500 w-full"></div>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium text-slate-500">
-                    Conversion Rate
+                    News
                   </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-purple-500" />
+                  <Newspaper className="h-4 w-4 text-purple-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <div className="text-3xl font-bold text-slate-800">
-                        24%
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        From visit to action
-                      </p>
-                    </div>
-                    <div className="flex items-center text-sm text-rose-500">
-                      <ChevronDown className="h-4 w-4 mr-1" />
-                      2.1%
-                    </div>
-                  </div>
+                  <div className="text-2xl font-bold text-slate-800">{todayNews}</div>
+                  <p className="text-xs text-slate-500 mt-1">Total news items</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Categories Stats */}
+            <motion.div variants={item}>
+              <Card className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="h-1 bg-emerald-500 w-full"></div>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-500">
+                    Categories
+                  </CardTitle>
+                  <FolderOpen className="h-4 w-4 text-emerald-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-800">{totalCategories}</div>
+                  <p className="text-xs text-slate-500 mt-1">Total categories</p>
                 </CardContent>
               </Card>
             </motion.div>
           </motion.div>
 
-          {/* Charts Section */}
-          <motion.div 
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"
-          >
-            <motion.div variants={item}>
-              <Card className="border-none shadow-md hover:shadow-lg transition-shadow duration-300">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl font-bold text-slate-800">Notification Trends</CardTitle>
-                      <CardDescription>Daily notification activity</CardDescription>
-                    </div>
-                    <BarChartIcon className="h-5 w-5 text-indigo-500" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={notificationTrends}>
-                        <defs>
-                          <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366F1" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#6366F1" stopOpacity={0.1}/>
-                          </linearGradient>
-                          <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="day" axisLine={false} tickLine={false} />
-                        <YAxis axisLine={false} tickLine={false} />
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.1} />
-                        <Tooltip />
-                        <Legend />
-                        <Area 
-                          type="monotone" 
-                          dataKey="count" 
-                          stroke="#6366F1" 
-                          fillOpacity={1} 
-                          fill="url(#colorCount)" 
-                          name="Notifications"
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="average" 
-                          stroke="#8B5CF6" 
-                          fillOpacity={1} 
-                          fill="url(#colorAvg)" 
-                          name="Average"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-            
-            <motion.div variants={item}>
-              <Card className="border-none shadow-md hover:shadow-lg transition-shadow duration-300">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl font-bold text-slate-800">Sponsor Trends</CardTitle>
-                      <CardDescription>Daily sponsor activity</CardDescription>
-                    </div>
-                    <BarChartIcon className="h-5 w-5 text-amber-500" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sponsorTrends} barGap={4}>
-                        <XAxis dataKey="day" axisLine={false} tickLine={false} />
-                        <YAxis axisLine={false} tickLine={false} />
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.1} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar 
-                          dataKey="count" 
-                          fill="#F59E0B" 
-                          radius={[4, 4, 0, 0]} 
-                          name="Sponsors"
-                        />
-                        <Bar 
-                          dataKey="average" 
-                          fill="#D97706" 
-                          radius={[4, 4, 0, 0]} 
-                          name="Average"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
-
-          {/* Notifications Section */}
-          <motion.div 
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="mb-8"
-          >
-            <motion.div variants={item}>
+          {/* Content Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Notifications Section */}
+            <motion.div variants={container} initial="hidden" animate="show">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-slate-800">Recent Notifications</h2>
-                <span className="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                   {filteredNotifications.length} total
                 </span>
               </div>
-              
-              <Card className="border-none shadow-md overflow-hidden">
-                {filteredNotifications.length === 0 ? (
-                  <div className="p-10 flex flex-col items-center justify-center">
-                    <Bell className="h-12 w-12 text-slate-300 mb-3" />
-                    <h3 className="text-lg font-medium text-slate-700">No notifications yet</h3>
-                    <p className="text-slate-500 text-sm text-center mt-1">
-                      When you receive notifications, they will appear here
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-                    {filteredNotifications.slice(0, 6).map((notification) => {
-                      return(
-                      <DashNotificationCard key={notification.id} notification={notification} />
-)})}
-                  </div>
-                )}
-                {filteredNotifications.length > 6 && (
-                  <div className="px-6 pb-6 flex justify-center">
-                    <button className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                      View all notifications
-                    </button>
-                  </div>
-                )}
+              <Card className="border-none shadow-md">
+                <CardContent className="p-4">
+                  {filteredNotifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <Bell className="h-12 w-12 text-slate-300 mb-3" />
+                      <p className="text-slate-500">No notifications yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {filteredNotifications.slice(0, 3).map((notification) => (
+                        <DashNotificationCard key={notification.id} notification={notification} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
               </Card>
             </motion.div>
-          </motion.div>
 
-          {/* Sponsors Section */}
-          <motion.div 
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            <motion.div variants={item}>
+            {/* Sponsors Section */}
+            <motion.div variants={container} initial="hidden" animate="show">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-slate-800">Active Sponsors</h2>
                 <span className="text-sm font-medium text-amber-600 bg-amber-50 px-3 py-1 rounded-full">
                   {filteredSponsors.length} total
                 </span>
               </div>
-              
-              <Card className="border-none shadow-md overflow-hidden">
-                {filteredSponsors.length === 0 ? (
-                  <div className="p-10 flex flex-col items-center justify-center">
-                    <Users className="h-12 w-12 text-slate-300 mb-3" />
-                    <h3 className="text-lg font-medium text-slate-700">No sponsors yet</h3>
-                    <p className="text-slate-500 text-sm text-center mt-1">
-                      When you add sponsors, they will appear here
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-                    {filteredSponsors.map((sponsor) => (
-                      <DashSponsorCard key={sponsor.id} sponsor={sponsor} />
-                    ))}
-                  </div>
-                )}
+              <Card className="border-none shadow-md">
+                <CardContent className="p-4">
+                  {filteredSponsors.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <Users className="h-12 w-12 text-slate-300 mb-3" />
+                      <p className="text-slate-500">No sponsors yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {filteredSponsors.slice(0, 3).map((sponsor) => (
+                        <DashSponsorCard key={sponsor.id} sponsor={sponsor} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
               </Card>
             </motion.div>
-          </motion.div>
-          
+
+            {/* News Section */}
+            <motion.div variants={container} initial="hidden" animate="show">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-slate-800">Latest News</h2>
+                <span className="text-sm font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                  {filteredNews.length} total
+                </span>
+              </div>
+              <Card className="border-none shadow-md">
+                <CardContent className="p-4">
+                  {filteredNews.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <Newspaper className="h-12 w-12 text-slate-300 mb-3" />
+                      <p className="text-slate-500">No news yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {filteredNews.slice(0, 3).map((news) => (
+                        <DashNewsCard key={news.id} news={news} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Categories Section */}
+            <motion.div variants={container} initial="hidden" animate="show">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-slate-800">Categories</h2>
+                <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                  {categories.length} total
+                </span>
+              </div>
+              <Card className="border-none shadow-md">
+                <CardContent className="p-4">
+                  {categories.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <FolderOpen className="h-12 w-12 text-slate-300 mb-3" />
+                      <p className="text-slate-500">No categories yet</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {categories.slice(0, 3).map((category) => (
+                        <DashCategoryCard key={category.id} category={category} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
           {/* Footer */}
           <motion.div
             initial={{ opacity: 0 }}

@@ -99,7 +99,7 @@ const SponsorsPage: React.FC = () => {
           >
             <div className="rounded-xl md:col-span-6 relative shadow-md ">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 "
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-300 "
                 size={20}
               />
               <Input
@@ -128,9 +128,9 @@ const SponsorsPage: React.FC = () => {
               {filteredSponsors.length === 0 ? (
                 <motion.div
                   variants={itemVariants}
-                  className="text-center p-10 bg-white rounded-lg shadow-sm border border-slate-100"
+                  className="text-center p-10 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-amber-100"
                 >
-                  <h3 className="text-lg font-medium text-slate-700">
+                  <h3 className="text-lg font-medium text-amber-700">
                     No Sponsors found
                   </h3>
                 </motion.div>

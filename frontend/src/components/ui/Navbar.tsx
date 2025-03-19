@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, Bell, Settings, LogOut, Home, Gift, Users, Newspaper } from "lucide-react";
+import { Menu, Bell, Settings, LogOut, Home, Gift, Users, Newspaper, FolderOpen } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,19 +55,18 @@ const Navbar = () => {
   const NavLinks = () => (
     <>
       {[
-        { href: "/dashboard", icon: Home, label: "Dashboard" },
         { href: "/notifications", icon: Bell, label: "Notifications" },
         { href: "/sponsor", icon: Gift, label: "Sponsor" },
         { href: "/news", icon: Newspaper, label: "News" },
-        { href: "/categories", icon: Newspaper, label: "Categories" },
+        { href: "/categories", icon: FolderOpen, label: "Categories" },
       ].map((link, index) => (
         <Link key={index} href={link.href}>
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center px-4 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-gradient-to-r from-indigo-50 to-purple-50"
+            className="flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors rounded-lg hover:bg-slate-100"
           >
-            <link.icon className="h-4 w-4 mr-2" />
+            <link.icon className="h-5 w-5 mr-2.5 text-slate-500" />
             {link.label}
           </motion.div>
         </Link>
@@ -78,20 +77,20 @@ const Navbar = () => {
   const NavLinksMobile = () => (
     <>
       {[
-        { href: "/dashboard", icon: Home, label: "Dashboard", color: "indigo" },
-        { href: "/notifications", icon: Bell, label: "Notifications", color: "purple" },
-        { href: "/sponsor", icon: Gift, label: "Sponsor", color: "pink" },
-        { href: "/news", icon: Newspaper, label: "News", color: "blue" },
-        { href: "/categories", icon: Newspaper, label: "Categories", color: "purple" },
+        { href: "/dashboard", icon: Home, label: "Dashboard" },
+        { href: "/notifications", icon: Bell, label: "Notifications" },
+        { href: "/sponsor", icon: Gift, label: "Sponsor" },
+        { href: "/news", icon: Newspaper, label: "News" },
+        { href: "/categories", icon: FolderOpen, label: "Categories" },
       ].map((link, index) => (
         <Link key={index} href={link.href}>
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`flex items-center px-5 py-3 my-1 hover:bg-gradient-to-r from-${link.color}-50 to-${link.color}-100 rounded-lg transition-all`}
+            className="flex items-center px-4 py-2.5 my-1 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all"
           >
-            <link.icon className={`h-4 w-4 mr-2 text-${link.color}-600`} />
-            <span className={`text-${link.color}-800`}>{link.label}</span>
+            <link.icon className="h-5 w-5 mr-2.5 text-slate-500" />
+            <span>{link.label}</span>
           </motion.div>
         </Link>
       ))}
@@ -101,15 +100,14 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/70 shadow-lg">
       <div className="container px-4 sm:px-6 lg:px-8 mx-auto">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between md:justify-around">
           {/* Logo section */}
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center">
               <motion.img
-                whileHover={{ rotate: 360 }}
                 src="/assets/yakkaw_icon.png"
                 alt="LOGO"
-                className=" h-full rounded-full object-contain"
+                className="h-full rounded-full object-contain"
                 width={100}
               />
             </Link>
@@ -188,13 +186,14 @@ const Navbar = () => {
               </SheetTrigger>
               <SheetContent side="right" className="w-72">
                 <SheetHeader className="text-left">
-                  <div className="flex items-center">
-                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-2 rounded-lg mr-2">
-                      <span className="font-bold text-xl">Y</span>
-                    </div>
-                    <SheetTitle className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                      Yakkaw
-                    </SheetTitle>
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                  <div className="flex items-center justify-center -mb-5">
+                    <motion.img
+                      src="/assets/yakkaw_icon.png"
+                      alt="LOGO"
+                      className="h-full rounded-full object-contain"
+                      width={140}
+                    />
                   </div>
                 </SheetHeader>
                 <div className="py-4">
