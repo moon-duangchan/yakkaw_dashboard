@@ -1,11 +1,12 @@
 package routes
 
 import (
-	"github.com/labstack/echo/v4"
 	"yakkaw_dashboard/controllers"
 	"yakkaw_dashboard/database"
 	"yakkaw_dashboard/middleware"
 	"yakkaw_dashboard/services"
+
+	"github.com/labstack/echo/v4"
 )
 
 func Init(e *echo.Echo) {
@@ -66,8 +67,9 @@ func Init(e *echo.Echo) {
 	e.GET("/api/airquality/one_month", airCtl.GetOneMonthDataHandler)
 	e.GET("/api/airquality/three_months", airCtl.GetThreeMonthsDataHandler)
 	e.GET("/api/airquality/one_year", airCtl.GetOneYearDataHandler)
+	e.GET("/api/airquality/province_average", airCtl.GetProvinceAveragePM25Handler)
 
-	// 🔹 Chart Data Route
+	// �� Chart Data Route
 	chartDataController := controllers.NewChartDataController()
 	e.GET("/api/chartdata", chartDataController.GetChartDataHandler)
 
