@@ -59,6 +59,10 @@ const Navbar = () => {
         { href: "/sponsor", icon: Gift, label: "Sponsor" },
         { href: "/news", icon: Newspaper, label: "News" },
         { href: "/categories", icon: FolderOpen, label: "Categories" },
+        { href: "/ColorRangeePage", icon: FolderOpen, label: "ColorRange" },
+        { href: "/DevicePage", icon: FolderOpen, label: "DevicePage" },
+
+
       ].map((link, index) => (
         <Link key={index} href={link.href}>
           <motion.div

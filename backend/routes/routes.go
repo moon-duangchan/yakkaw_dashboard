@@ -10,6 +10,21 @@ import (
 )
 
 func Init(e *echo.Echo) {
+
+	ctrl := new(controllers.ColorRangeeController)
+
+	e.POST("/colorranges", ctrl.Create)
+	e.GET("/colorranges", ctrl.GetAll)
+	e.GET("/colorranges/:id", ctrl.GetByID)
+	e.PUT("/colorranges/:id", ctrl.Update)
+	e.DELETE("/colorranges/:id", ctrl.Delete)
+	//Devices
+	e.POST("/devices", controllers.CreateDevice)
+	e.GET("/devices", controllers.GetAllDevices)
+	e.GET("/devices/:dvid", controllers.GetDevice)
+	e.PUT("/devices/:dvid", controllers.UpdateDevice)
+	e.DELETE("/devices/:id", controllers.DeleteDevice)
+
 	// 🔹 Public Authentication Routes
 	e.POST("/register", controllers.Register)
 	e.POST("/login", controllers.Login)
