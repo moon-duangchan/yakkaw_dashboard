@@ -4,12 +4,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"yakkaw_dashboard/database"
 	"yakkaw_dashboard/routes"
 	"yakkaw_dashboard/services"
 	"yakkaw_dashboard/utils"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 
 	// Enable CORS middleware to allow requests from the frontend
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000"}, // Allow only frontend's domain
+		AllowOrigins:     []string{"http://localhost:3000", "exp://*", "http://*"}, // Allow frontend and Expo
 		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE},
 		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization},
 		AllowCredentials: true,

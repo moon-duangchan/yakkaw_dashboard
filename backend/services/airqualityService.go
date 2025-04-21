@@ -266,3 +266,21 @@ func GetProvinceAveragePM25() ([]map[string]interface{}, error) {
 
 	return results, nil
 }
+
+// GetSensorData7Days ดึงข้อมูล sensor_data ย้อนหลัง 7 วัน
+func GetSensorData7Days() ([]models.SensorData, error) {
+	var sensorData []models.SensorData
+
+	query := `
+		SELECT *
+		FROM sensor_data
+		WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '7 days' AND now()
+		ORDER BY timestamp DESC
+	`
+
+	if err := database.DB.Raw(query).Scan(&sensorData).Error; err != nil {
+		return nil, err
+	}
+
+	return sensorData, nil
+}

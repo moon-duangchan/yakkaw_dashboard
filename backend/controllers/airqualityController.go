@@ -84,3 +84,12 @@ func (ctl *AirQualityController) GetProvinceAveragePM25Handler(c echo.Context) e
 	}
 	return c.JSON(http.StatusOK, data)
 }
+
+// GetSensorData7DaysHandler ดึงข้อมูล sensor_data ย้อนหลัง 7 วัน
+func (ctl *AirQualityController) GetSensorData7DaysHandler(c echo.Context) error {
+	data, err := services.GetSensorData7Days()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, data)
+}
