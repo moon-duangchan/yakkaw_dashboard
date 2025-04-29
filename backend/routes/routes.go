@@ -85,9 +85,10 @@ func Init(e *echo.Echo) {
 	e.GET("/api/airquality/province_average", airCtl.GetProvinceAveragePM25Handler)
 	e.GET("/api/airquality/sensor_data/week", airCtl.GetSensorData7DaysHandler)
 
-	// ✅ Chart Data Route
+	// 🔹 Chart Data Route
 	chartDataController := controllers.NewChartDataController()
 	e.GET("/api/chartdata", chartDataController.GetChartDataHandler)
+	e.GET("/api/chartdata/today", chartDataController.GetTodayChartDataHandler)
 
 	// 🔹 Get Latest Air Quality
 	e.GET("/api/airquality/latest", controllers.GetLatestAirQuality)

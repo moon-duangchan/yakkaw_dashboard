@@ -14,54 +14,160 @@ import (
 func GetChartData(rangeType string, province string) (models.ChartData, error) {
 	var chartData models.ChartData
 	var baseQuery string
-	var interval string
-	var dateTruncFormat string
 
 	// กำหนดช่วงเวลาและฟังก์ชัน date_trunc ที่จะใช้
 	switch rangeType {
+	case "Today":
+		if province != "" {
+			baseQuery = `
+				WITH hourly_data AS (
+					SELECT 
+						split_part(address, 'จ.', 2) as province,
+						date_trunc('hour', to_timestamp(timestamp/1000)) as time_label,
+						pm25,
+						ROW_NUMBER() OVER (
+							PARTITION BY split_part(address, 'จ.', 2), 
+							date_trunc('hour', to_timestamp(timestamp/1000))
+							ORDER BY timestamp DESC
+						) as rn
+					FROM sensor_data
+					WHERE to_timestamp(timestamp/1000) >= date_trunc('day', now())
+					  AND address ILIKE ?
+				)
+				SELECT 
+					province,
+					time_label,
+					pm25 as avg_pm25
+				FROM hourly_data
+				WHERE rn = 1
+				ORDER BY time_label
+			`
+		} else {
+			baseQuery = `
+				WITH hourly_data AS (
+					SELECT 
+						split_part(address, 'จ.', 2) as province,
+						date_trunc('hour', to_timestamp(timestamp/1000)) as time_label,
+						pm25,
+						ROW_NUMBER() OVER (
+							PARTITION BY split_part(address, 'จ.', 2), 
+							date_trunc('hour', to_timestamp(timestamp/1000))
+							ORDER BY timestamp DESC
+						) as rn
+					FROM sensor_data
+					WHERE to_timestamp(timestamp/1000) >= date_trunc('day', now())
+				)
+				SELECT 
+					province,
+					time_label,
+					pm25 as avg_pm25
+				FROM hourly_data
+				WHERE rn = 1
+				ORDER BY province, time_label
+			`
+		}
 	case "24 Hour":
-		interval = "24 hours"
-		dateTruncFormat = "hour"
+		baseQuery = `
+			SELECT split_part(address, 'จ.', 2) as province,
+			       date_trunc('hour', to_timestamp(timestamp/1000)) as time_label,
+			       AVG(pm25) as avg_pm25
+			FROM sensor_data
+			WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '24 hours' AND now()
+		`
+		if province != "" {
+			baseQuery += ` AND address ILIKE ?`
+		}
+		baseQuery += ` GROUP BY province, time_label`
+		if province != "" {
+			baseQuery += ` ORDER BY time_label`
+		} else {
+			baseQuery += ` ORDER BY province, time_label`
+		}
 	case "1 Week":
-		interval = "7 days"
-		dateTruncFormat = "day"
+		baseQuery = `
+			SELECT split_part(address, 'จ.', 2) as province,
+			       date_trunc('day', to_timestamp(timestamp/1000)) as time_label,
+			       AVG(pm25) as avg_pm25
+			FROM sensor_data
+			WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '7 days' AND now()
+		`
+		if province != "" {
+			baseQuery += ` AND address ILIKE ?`
+		}
+		baseQuery += ` GROUP BY province, time_label`
+		if province != "" {
+			baseQuery += ` ORDER BY time_label`
+		} else {
+			baseQuery += ` ORDER BY province, time_label`
+		}
 	case "1 Month":
-		interval = "1 month"
-		dateTruncFormat = "week"
+		baseQuery = `
+			SELECT split_part(address, 'จ.', 2) as province,
+			       date_trunc('week', to_timestamp(timestamp/1000)) as time_label,
+			       AVG(pm25) as avg_pm25
+			FROM sensor_data
+			WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '1 month' AND now()
+		`
+		if province != "" {
+			baseQuery += ` AND address ILIKE ?`
+		}
+		baseQuery += ` GROUP BY province, time_label`
+		if province != "" {
+			baseQuery += ` ORDER BY time_label`
+		} else {
+			baseQuery += ` ORDER BY province, time_label`
+		}
 	case "3 Month":
-		interval = "3 months"
-		dateTruncFormat = "month"
+		baseQuery = `
+			SELECT split_part(address, 'จ.', 2) as province,
+			       date_trunc('month', to_timestamp(timestamp/1000)) as time_label,
+			       AVG(pm25) as avg_pm25
+			FROM sensor_data
+			WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '3 months' AND now()
+		`
+		if province != "" {
+			baseQuery += ` AND address ILIKE ?`
+		}
+		baseQuery += ` GROUP BY province, time_label`
+		if province != "" {
+			baseQuery += ` ORDER BY time_label`
+		} else {
+			baseQuery += ` ORDER BY province, time_label`
+		}
 	case "1 Year":
-		interval = "1 year"
-		dateTruncFormat = "month"
+		baseQuery = `
+			SELECT split_part(address, 'จ.', 2) as province,
+			       date_trunc('month', to_timestamp(timestamp/1000)) as time_label,
+			       AVG(pm25) as avg_pm25
+			FROM sensor_data
+			WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '1 year' AND now()
+		`
+		if province != "" {
+			baseQuery += ` AND address ILIKE ?`
+		}
+		baseQuery += ` GROUP BY province, time_label`
+		if province != "" {
+			baseQuery += ` ORDER BY time_label`
+		} else {
+			baseQuery += ` ORDER BY province, time_label`
+		}
 	default:
-		interval = "24 hours"
-		dateTruncFormat = "hour"
-	}
-
-	// สร้าง SQL Query โดยใช้ split_part เพื่อ extract จังหวัดจาก address
-	// ถ้ามี province ถูกส่งเข้ามา จะเพิ่มเงื่อนไข filter ด้วย AND address ILIKE ?
-	if province != "" {
 		baseQuery = `
 			SELECT split_part(address, 'จ.', 2) as province,
-			       date_trunc('` + dateTruncFormat + `', to_timestamp(timestamp/1000)) as time_label,
+			       date_trunc('hour', to_timestamp(timestamp/1000)) as time_label,
 			       AVG(pm25) as avg_pm25
 			FROM sensor_data
-			WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '` + interval + `' AND now()
-			  AND address ILIKE ?
-			GROUP BY province, time_label
-			ORDER BY time_label
+			WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '24 hours' AND now()
 		`
-	} else {
-		baseQuery = `
-			SELECT split_part(address, 'จ.', 2) as province,
-			       date_trunc('` + dateTruncFormat + `', to_timestamp(timestamp/1000)) as time_label,
-			       AVG(pm25) as avg_pm25
-			FROM sensor_data
-			WHERE to_timestamp(timestamp/1000) BETWEEN now() - interval '` + interval + `' AND now()
-			GROUP BY province, time_label
-			ORDER BY province, time_label
-		`
+		if province != "" {
+			baseQuery += ` AND address ILIKE ?`
+		}
+		baseQuery += ` GROUP BY province, time_label`
+		if province != "" {
+			baseQuery += ` ORDER BY time_label`
+		} else {
+			baseQuery += ` ORDER BY province, time_label`
+		}
 	}
 
 	// โครงสร้างผลลัพธ์จาก query
@@ -146,7 +252,7 @@ func GetChartData(rangeType string, province string) (models.ChartData, error) {
 // Helper function สำหรับฟอร์แมต label ตามช่วงเวลา
 func formatLabel(rangeType string, t time.Time) string {
 	switch rangeType {
-	case "24 Hour":
+	case "Today", "24 Hour":
 		return t.Format("15:04")
 	case "1 Week":
 		return t.Format("Mon")
