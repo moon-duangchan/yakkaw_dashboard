@@ -16,5 +16,5 @@ type Device struct {
 	Models       string    `gorm:"type:varchar(255);not null" json:"models"`
 	ContactName  string    `gorm:"type:varchar(255);not null" json:"contact_name"`
 	ContactPhone string    `gorm:"type:varchar(255);not null" json:"contact_phone"`
-	DeployDate   time.Time `gorm:"type:datetime;not null" json:"deploy_date"`
+	DeployDate   time.Time `gorm:"type:timestamp;not null" json:"deploy_date"`
 }

@@ -9,17 +9,17 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ColorRangee } from "@/types";
+import { ColorRange } from "@/constant/colorRangeData";
 
 type Props = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (colorRange: ColorRangee) => void;
-  colorRange: ColorRangee;
-  setColorRange: (colorRange: ColorRangee) => void;
+  onSubmit: (colorRange: ColorRange) => void;
+  colorRange: ColorRange;
+  setColorRange: (colorRange: ColorRange) => void;
   title: string;
   submitButtonText: string;
-  existingRanges: ColorRangee[];
+  existingRanges: ColorRange[];
 };
 
 export const FormDialog: React.FC<Props> = ({
@@ -61,7 +61,7 @@ export const FormDialog: React.FC<Props> = ({
     const normalizedMax = parseFloat(max.toFixed(6));
 
     const isDuplicateOrOverlap = existingRanges.some((range) => {
-      if (colorRange.id && range.id && colorRange.id === range.id) {
+      if (colorRange.ID && range.ID && colorRange.ID === range.ID) {
         return false;
       }
 
@@ -149,8 +149,8 @@ export const FormDialog: React.FC<Props> = ({
             <input
               type="color"
               className="w-16 h-10 p-0 border border-gray-300 rounded"
-              value={colorRange.Color || "#FFFFFF"}
-              onChange={(e) => setColorRange({ ...colorRange, Color: e.target.value })}
+              value={colorRange.color || "#FFFFFF"}
+              onChange={(e) => setColorRange({ ...colorRange, color: e.target.value })}
             />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}

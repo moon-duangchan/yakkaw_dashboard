@@ -29,6 +29,8 @@ const DevicePage: React.FC = () => {
     handleDelete,
   } = useDevices();
 
+  const [originalDvid, setOriginalDvid] = React.useState<string | null>(null);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -57,10 +59,16 @@ const DevicePage: React.FC = () => {
               className="bg-blue-500 hover:bg-blue-700"
               onClick={() => {
                 setCurrentDevice({
-                  DVID: "",
-                  Address: "",
-                  Longitude: 0,
-                  Latitude: 0,
+                  id: 0,
+                  dvid: "",
+                  address: "",
+                  longitude: 0,
+                  latitude: 0,
+                  place: "",
+                  models: "",
+                  contact_name: "",
+                  contact_phone: "",
+                  deploy_date: new Date().toISOString(),
                 });
                 setIsCreateDialogOpen(true);
               }}
@@ -124,6 +132,7 @@ const DevicePage: React.FC = () => {
                             className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs"
                             onClick={() => {
                               setCurrentDevice(device);
+                              // setOriginalDvid(device.dvid); // เก็บ dvid เดิมไว้
                               setIsEditDialogOpen(true);
                             }}
                           >
@@ -132,12 +141,11 @@ const DevicePage: React.FC = () => {
                           <Button
                             className="bg-red-500 hover:bg-red-600 text-white text-xs"
                             onClick={() => {
-                              console.log("Device object:", device); // Debug log to inspect the device object
-                              if (device.ID) { // Use device.ID instead of device.id
-                                setDeviceToDelete(device.ID); // Pass device.ID here
+                              if (device.ID) {
+                                setDeviceToDelete(device.ID);
                                 setIsConfirmDialogOpen(true);
                               } else {
-                                console.error("Device ID is undefined.");
+                                console.error("Device DVID is undefined.");
                               }
                             }}
                           >
@@ -183,7 +191,7 @@ const DevicePage: React.FC = () => {
             <ConfirmDeleteDialog
               isOpen={isConfirmDialogOpen}
               onOpenChange={setIsConfirmDialogOpen}
-              onConfirm={handleDelete} // Use handleDelete directly
+              onConfirm={handleDelete}
             />
           )}
         </motion.div>

@@ -4,7 +4,8 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Device } from "@/types";
+import { Device } from "@/constant/deviceData";
+
 
 type Props = {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export const FormDeviceDialog: React.FC<Props> = ({
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const parsedValue = name === "Longitude" || name === "Latitude" ? parseFloat(value) : value;
+    const parsedValue = name === "longitude" || name === "latitude" ? parseFloat(value) : value;
     setDevice({ ...device, [name]: parsedValue });
   };
 
@@ -48,18 +49,18 @@ export const FormDeviceDialog: React.FC<Props> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">DVID</label>
-            <Input name="DVID" value={device.DVID} onChange={handleChange} required />
+            <Input name="dvid" value={device.dvid} onChange={handleChange} required />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Address</label>
-            <Input name="Address" value={device.Address} onChange={handleChange} required />
+            <Input name="address" value={device.address} onChange={handleChange} required />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Longitude</label>
             <Input
               type="number"
-              name="Longitude"
-              value={device.Longitude}
+              name="longitude"
+              value={device.longitude}
               onChange={handleChange}
               required
             />
@@ -68,19 +69,19 @@ export const FormDeviceDialog: React.FC<Props> = ({
             <label className="block text-sm font-medium text-gray-700">Latitude</label>
             <Input
               type="number"
-              name="Latitude"
-              value={device.Latitude}
+              name="latitude"
+              value={device.latitude}
               onChange={handleChange}
               required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Place</label>
-            <Input name="Place" value={device.Place} onChange={handleChange} required />
+            <Input name="place" value={device.place} onChange={handleChange} required />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Models</label>
-            <Input name="Models" value={device.Models} onChange={handleChange} required />
+            <Input name="models" value={device.models} onChange={handleChange} required />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Contact Name</label>

@@ -1,25 +1,83 @@
 import { useState, useEffect } from "react";
+import { Device } from "@/constant/deviceData";
 import axios from "axios";
-import { Device } from "@/types"; // สมมุติว่ามี type นี้
 
 export const useDevices = () => {
   const [devices, setDevices] = useState<Device[]>([]);
-  const [currentDevice, setCurrentDevice] = useState<Device | null>(null); // ✅ สำคัญ
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState<boolean>(false);
   const [deviceToDelete, setDeviceToDelete] = useState<number | null>(null);
+  const [currentDevice, setCurrentDevice] = useState<Device | null>(null);
 
   const fetchDevices = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/devices");
-      setDevices(res.data);
+      setIsLoading(true);
+      const response = await fetch("http://localhost:8080/devices");
+      if (!response.ok) throw new Error("อ้าย ๆ มันโหลดบ่ด้าย");
+      const data = await response.json();
+      setDevices(data || []);
+      setError("");
     } catch (err) {
-      setError("Failed to fetch devices.");
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreate = async (device: Device) => {
+    try {
+      const response = await fetch("http://localhost:8080/admin/devices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(device),
+      });
+      if (!response.ok) throw new Error("Failed to create device");
+      await fetchDevices();
+      setIsCreateDialogOpen(false);
+      setCurrentDevice(null);
+      setError("");
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const handleUpdate = async (device: Device) => {
+    if (!device || !device.dvid) return;
+    try {
+      await axios.put(
+        `http://localhost:8080/admin/devices/${device.dvid}`,
+        device,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+      await fetchDevices();
+      setIsEditDialogOpen(false);
+      setCurrentDevice(null);
+      setError("ใช้งานได้แค่เด้งมาให้ตกใจเล่น ๆ");
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deviceToDelete) return;
+    try {
+      await axios.delete(`http://localhost:8080/admin/devices/${deviceToDelete}`, {
+        withCredentials: true,
+      });
+      await fetchDevices();
+      setIsConfirmDialogOpen(false);
+      setDeviceToDelete(null);
+      setError("");
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err.message);
+      console.error("Delete device error:", err);
     }
   };
 
@@ -27,58 +85,22 @@ export const useDevices = () => {
     fetchDevices();
   }, []);
 
-  const handleCreate = async (device: Device) => {
-    await axios.post("http://localhost:8080/devices", device);
-    fetchDevices();
-  };
-
-  const handleUpdate = async (device: Device) => {
-    await axios.put(`http://localhost:8080/devices/${device.dvid}`, device);
-    fetchDevices();
-  };
-
-  const handleDelete = async () => {
-    if (!deviceToDelete) {
-      console.error("No device selected for deletion. deviceToDelete:", deviceToDelete);
-      return;
-    }
-
-    try {
-      const response = await fetch(`http://localhost:8080/devices/${deviceToDelete}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete the device.");
-      }
-
-      // Refresh the devices list after deletion
-      await fetchDevices();
-      setIsConfirmDialogOpen(false);
-    } catch (error) {
-      console.error("Error deleting device:", error);
-      alert("Failed to delete the device. Please try again.");
-    }
-  };
-  
-  // console.log(devices);
-
   return {
     devices,
     isLoading,
     error,
-    isCreateDialogOpen,
-    setIsCreateDialogOpen,
     isEditDialogOpen,
     setIsEditDialogOpen,
+    isCreateDialogOpen,
+    setIsCreateDialogOpen,
     isConfirmDialogOpen,
     setIsConfirmDialogOpen,
+    deviceToDelete,
+    setDeviceToDelete,
     currentDevice,
-    setCurrentDevice, 
+    setCurrentDevice,
     handleCreate,
     handleUpdate,
     handleDelete,
-    deviceToDelete,
-    setDeviceToDelete,
   };
 };

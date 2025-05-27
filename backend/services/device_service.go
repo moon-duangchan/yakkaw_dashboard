@@ -23,7 +23,7 @@ func CreateDevice(device models.Device) (models.Device, error) {
 
 func GetDeviceByDVID(dvid string) (models.Device, error) {
 	var device models.Device
-	if err := database.DB.Where("dvid = ?", dvid).First(&device).Error; err != nil {
+	if err := database.DB.Where("dv_id = ?", dvid).First(&device).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return device, nil // Return nil if not found
 		}
@@ -42,17 +42,25 @@ func GetAllDevices() ([]models.Device, error) {
 
 func UpdateDevice(dvid string, device models.Device) (models.Device, error) {
 	var existingDevice models.Device
-	// ค้นหาข้อมูล device ที่มี DVID ตรงกัน
-	if err := database.DB.Where("dvid = ?", dvid).First(&existingDevice).Error; err != nil {
+	// ค้นหาข้อมูล device ที่มี DVID ตรงกัน (รวม soft deleted ถ้าต้องการ)
+	err := database.DB.Where("dv_id = ?", dvid).First(&existingDevice).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return models.Device{}, gorm.ErrRecordNotFound // แจ้งชัดเจนว่าไม่พบ record (อาจถูกลบแบบ soft delete)
+		}
 		return models.Device{}, err
 	}
 
-	// อัปเดตข้อมูลที่สามารถแก้ไขได้
-	existingDevice.Model = device.Model
+	// อัปเดตข้อมูลที่จำเป็น
 	existingDevice.Address = device.Address
 	existingDevice.Longitude = device.Longitude
 	existingDevice.Latitude = device.Latitude
-	// ตั้งค่า deploy_date เป็นเวลาปัจจุบันถ้าไม่มีการส่งมา
+	existingDevice.Place = device.Place
+	existingDevice.Models = device.Models
+	existingDevice.ContactName = device.ContactName
+	existingDevice.ContactPhone = device.ContactPhone
+	// ตั้งค่า deploy_date เป็นเวลาปัจจุบันถ้าไม่มีการตั้งค่า
+
 	if device.DeployDate.IsZero() {
 		existingDevice.DeployDate = time.Now()
 	} else {

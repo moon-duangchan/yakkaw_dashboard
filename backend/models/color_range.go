@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type ColorRangee struct {
+type ColorRange struct {
 	gorm.Model
 	Min   int    `json:"min"`
 	Max   int    `json:"max"`

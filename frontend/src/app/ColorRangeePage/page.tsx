@@ -10,7 +10,7 @@ import { FormDialog } from "@/components/ui/FormColorRangeeDialog";
 import { ConfirmDeleteDialog } from "@/components/ui/ConfirmDeleteDialog";
 import Navbar from "@/components/ui/Navbar";
 
-const ColorRangeePage: React.FC = () => {
+const ColorRangePage: React.FC = () => {
   const {
     colorRanges,
     isLoading,
@@ -21,9 +21,9 @@ const ColorRangeePage: React.FC = () => {
     setIsEditDialogOpen,
     isConfirmDialogOpen,
     setIsConfirmDialogOpen,
-    setColorRangeeToDelete,
-    currentColorRangee,
-    setCurrentColorRangee,
+    setColorRangeToDelete,
+    currentColorRange,
+    setCurrentColorRange,
     handleCreate,
     handleUpdate,
     handleDelete,
@@ -59,8 +59,8 @@ const ColorRangeePage: React.FC = () => {
               className="bg-emerald-500 hover:bg-emerald-700"
               onClick={() => {
                 // ✅ เซ็ต default object ตอนกด Add
-                setCurrentColorRangee({ min: 0, max: 0, color: "#00ff00" });
                 setIsCreateDialogOpen(true);
+                setCurrentColorRange({ min: 0, max: 0, color: "#00ff00" });
               }}
             >
               <Plus size={16} /> Add Color Range
@@ -126,7 +126,7 @@ const ColorRangeePage: React.FC = () => {
                       <Button
                         className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
                         onClick={() => {
-                          setCurrentColorRangee(colorRange);
+                          setCurrentColorRange(colorRange);
                           setIsEditDialogOpen(true);
                         }}
                       >
@@ -136,7 +136,7 @@ const ColorRangeePage: React.FC = () => {
                         className="flex-1 bg-red-500 hover:bg-red-600 text-white"
                         onClick={() => {
                           if (colorRange.ID !== undefined && colorRange.ID !== null) {
-                            setColorRangeeToDelete(colorRange.ID);
+                            setColorRangeToDelete(colorRange.ID);
                             setIsConfirmDialogOpen(true);
                           } else {
                             console.error("Invalid color range ID: Cannot delete.");
@@ -153,26 +153,26 @@ const ColorRangeePage: React.FC = () => {
           </AnimatePresence>
 
           {/* ✅ Dialog สำหรับ Create */}
-          {isCreateDialogOpen && currentColorRangee && (
+          {isCreateDialogOpen && currentColorRange && (
             <FormDialog
               isOpen={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
               onSubmit={handleCreate}
-              colorRange={currentColorRangee}
-              setColorRange={setCurrentColorRangee}
+              colorRange={currentColorRange}
+              setColorRange={setCurrentColorRange}
               title="Create Color Range"
               submitButtonText="CREATE"
               existingRanges={colorRanges}
             />
           )}
           {/* ✅ Dialog สำหรับ Edit */}
-          {isEditDialogOpen && currentColorRangee && (
+          {isEditDialogOpen && currentColorRange && (
             <FormDialog
               isOpen={isEditDialogOpen}
               onOpenChange={setIsEditDialogOpen}
               onSubmit={handleUpdate}
-              colorRange={currentColorRangee}
-              setColorRange={setCurrentColorRangee}
+              colorRange={currentColorRange}
+              setColorRange={setCurrentColorRange}
               title="Edit Color Range"
               submitButtonText="UPDATE"
               existingRanges={colorRanges}
@@ -193,4 +193,4 @@ const ColorRangeePage: React.FC = () => {
   );
 };
 
-export default ColorRangeePage;
+export default ColorRangePage;

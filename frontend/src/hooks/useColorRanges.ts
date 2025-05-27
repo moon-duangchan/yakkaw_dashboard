@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-// Define the type for the ColorRange object
 interface ColorRange {
   ID: number;
   Min: number;
@@ -9,112 +8,121 @@ interface ColorRange {
   Color: string;
 }
 
-// Custom hook for managing color ranges
 export const useColorRanges = () => {
-  // State variables
   const [colorRanges, setColorRanges] = useState<ColorRange[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [currentColorRangee, setCurrentColorRangee] = useState<ColorRange | null>(null);
-  const [colorRangeeToDelete, setColorRangeeToDelete] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState<boolean>(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState<boolean>(false);
+  const [colorRangeToDelete, setColorRangeToDelete] = useState<number | null>(null);
+  const [currentColorRange, setCurrentColorRange] = useState<ColorRange | null>(null);
 
-  // useEffect hook to fetch data from API
+  const fetchColorRanges = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("http://localhost:8080/colorranges");
+      if (!response.ok) throw new Error("Failed to fetch color ranges");
+      const data = await response.json();
+      setColorRanges(data || []);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const fetchColorRanges = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get("http://localhost:8080/colorranges");
+      if (response.status !== 200 && response.status !== 201) throw new Error("Failed to fetch color ranges");
+      setColorRanges(response.data || []);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreate = async (colorRange: ColorRange) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/admin/colorranges",
+        colorRange,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+      if (response.status !== 200 && response.status !== 201) throw new Error("Failed to create color range");
+      await fetchColorRanges();
+      setIsCreateDialogOpen(false);
+      setCurrentColorRange(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err.message);
+    }
+  };
+
+  
+  const handleUpdate = async (e: React.FormEvent) => {
+   
+    if (!currentColorRange || !currentColorRange.ID) return;
+    try {
+      const response = await axios.put(
+        `http://localhost:8080/admin/colorranges/${currentColorRange.ID}`,
+        currentColorRange,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+      if (response.status !== 200 && response.status !== 201) throw new Error("Failed to update color range");
+      await fetchColorRanges();
+      setIsEditDialogOpen(false);
+      setCurrentColorRange(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!colorRangeToDelete) return;
+    try {
+      const response = await axios.delete(
+        `http://localhost:8080/admin/colorranges/${colorRangeToDelete}`,
+        {
+          withCredentials: true,
+        }
+      );
+      if (response.status !== 200 && response.status !== 204) throw new Error("Failed to delete color range");
+      await fetchColorRanges();
+      setIsConfirmDialogOpen(false);
+      setColorRangeToDelete(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err.message);
+    }
+  };
+
   useEffect(() => {
-    const fetchColorRanges = async () => {
-      try {
-        const response = await axios.get("http://localhost:8080/colorranges");
-        
-        if (Array.isArray(response.data)) {
-          setColorRanges(response.data);
-        } else {
-          throw new Error("Expected an array of color ranges");
-        }
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(`Failed to load color ranges: ${err.message}`);
-        } else {
-          setError("An unknown error occurred while fetching color ranges.");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchColorRanges();
   }, []);
 
-  // Function to create a new color range
-  const handleCreate = async (colorRange: ColorRange) => {
-    try {
-      const response = await axios.post("http://localhost:8080/colorranges", colorRange);
-      setColorRanges((prev) => [...prev, response.data]);
-      setIsCreateDialogOpen(false);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(`Failed to create color range: ${err.message}`);
-      } else {
-        setError("An unknown error occurred while creating color range.");
-      }
-    }
-  };
-
-  // Function to update a color range
-  const handleUpdate = async (colorRange: ColorRange) => {
-    try {
-      const response = await axios.put(`http://localhost:8080/colorranges/${colorRange.ID}`, colorRange);
-      setColorRanges((prev) =>
-        prev.map((item) => (item.ID === colorRange.ID ? response.data : item))
-      );
-      setIsEditDialogOpen(false);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(`Failed to update color range: ${err.message}`);
-      } else {
-        setError("An unknown error occurred while updating color range.");
-      }
-    }
-  };
-
-// Function to delete a color range
-// Function to delete a color range
-const handleDelete = async () => {
-  if (colorRangeeToDelete === null || colorRangeeToDelete === undefined) {
-    console.error("Invalid color range ID: Cannot delete.");
-    setError("Invalid color range ID: Cannot delete.");
-    return;
-  }
-  try {
-    // ใช้การลบจริงๆ (ไม่ใช่ soft delete)
-    await axios.delete(`http://localhost:8080/colorranges/${colorRangeeToDelete}`, {
-      data: { forceDelete: true }, // เพิ่มการตรวจสอบพิเศษหากต้องการลบจริง
-    });
-    setColorRanges((prev) => prev.filter((item) => item.ID !== colorRangeeToDelete));
-    setIsConfirmDialogOpen(false);
-  } catch (err) {
-    setError("Failed to delete color range");
-  }
-};
-
-
-  // Return everything needed for the component
   return {
     colorRanges,
     isLoading,
     error,
-    isCreateDialogOpen,
-    setIsCreateDialogOpen,
     isEditDialogOpen,
     setIsEditDialogOpen,
+    isCreateDialogOpen,
+    setIsCreateDialogOpen,
     isConfirmDialogOpen,
     setIsConfirmDialogOpen,
-    currentColorRangee,
-    setCurrentColorRangee,
+    colorRangeToDelete,
+    setColorRangeToDelete,
+    currentColorRange,
+    setCurrentColorRange,
     handleCreate,
     handleUpdate,
     handleDelete,
-    setColorRangeeToDelete,
   };
 };
