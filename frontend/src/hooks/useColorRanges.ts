@@ -18,19 +18,7 @@ export const useColorRanges = () => {
   const [colorRangeToDelete, setColorRangeToDelete] = useState<number | null>(null);
   const [currentColorRange, setCurrentColorRange] = useState<ColorRange | null>(null);
 
-  const fetchColorRanges = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("http://localhost:8080/colorranges");
-      if (!response.ok) throw new Error("Failed to fetch color ranges");
-      const data = await response.json();
-      setColorRanges(data || []);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
   const fetchColorRanges = async () => {
     try {
       setIsLoading(true);
