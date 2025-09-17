@@ -1,0 +1,134 @@
+Yakkaw Dashboard Backend — Code Review (Go/Echo/GORM)
+
+Summary
+- Solid foundation with Echo + GORM, clean separation into controllers/services/models/routes.
+- Docker and Postgres Compose provided; background pipeline fetches sensor data periodically.
+- A few security, config, and consistency issues should be addressed before production.
+
+Top Priorities
+1) JWT library and secret consistency
+   - files: controllers/authController.go, middlewares/jwt.go, services/authService.go
+   - Issue: Mixed JWT libraries: golang-jwt/jwt/v4 (controllers/middleware) vs deprecated dgrijalva/jwt-go (services/authService.go). Different secrets: "your-secret-key" vs "yourSecretKey".
+   - Impact: Security risk, hard-to-debug auth failures.
+   - Fix: Standardize on github.com/golang-jwt/jwt/v4. Move secret to env var (e.g., JWT_SECRET) and use the same value everywhere. Remove services/authService.go or refactor it to the same library and central utils.
+
+2) Auth context mismatch in admin routes
+   - files: middlewares/jwt.go, controllers/adminController.go, routes/routes.go
+   - Issue: Middleware sets c.Set("userRole") only; AdminDashboard expects c.Get("user").(*models.JWTCustomClaims). Echo’s default JWT middleware also sets "user" but you use a custom one.
+   - Impact: Admin dashboard likely returns Unauthorized due to missing "user" key.
+   - Fix: In middlewares/jwt.go, after parsing claims, set both c.Set("user", claims) and c.Set("userRole", claims.Role) to keep compatibility.
+
+3) CORS + credentials configuration
+   - files: main.go
+   - Issue: AllowOrigins includes very broad patterns (e.g., "http://*") with AllowCredentials=true.
+   - Impact: Browsers won’t accept wildcard with credentials, and broad origins are unsafe.
+   - Fix: Restrict to explicit origins via env (e.g., FRONTEND_ORIGINS CSV). Consider dev vs prod profiles.
+
+4) Server port and graceful shutdown
+   - files: main.go, .env
+   - Issue: Server listens on ":8080" hard-coded; SERVER_PORT is defined but unused. No graceful shutdown.
+   - Fix: Read port from env with default; use http.Server + context cancellation on shutdown.
+
+5) Background fetcher robustness
+   - files: main.go, services/airqualityService.go
+   - Issues:
+     - http.Get without timeout; no backoff; potential tight error loops.
+     - Possible duplicate inserts; no upsert/unique index.
+   - Fix:
+     - Use http.Client with Timeout, context, and backoff (e.g., exponential).
+     - Add unique index (e.g., (dvid,timestamp)) and use INSERT ... ON CONFLICT DO NOTHING/UPDATE.
+
+6) Models duplicated ID fields
+   - files: models/notification.go, models/sponsor.go
+   - Issue: Both embed gorm.Model and also define ID uint manually.
+   - Impact: Confusing schema and GORM behavior; potential migration anomalies.
+   - Fix: Remove explicit ID fields; keep gorm.Model only (or drop gorm.Model and define fields explicitly, not both).
+
+High-Impact Improvements
+7) AutoMigrate non-entity types
+   - files: database/db.go, models/chart_data.go, models/air_quality.go
+   - Issue: AutoMigrating APIResponse and ChartData/DatasetChart (which look like DTOs for responses). APIResponse fields are gorm:"-", but migrating them is misleading.
+   - Fix: Remove these from AutoMigrate; only migrate real persisted entities.
+
+8) Redis cache initialization and middleware bug
+   - files: cache/redis.go, middlewares/one_year.go, main.go
+   - Issues:
+     - Redis not initialized in main; middleware assumes cache.Rdb is ready.
+     - CacheOneYear resets resp.Writer immediately after wrapping; body is never captured.
+   - Fix:
+     - Call cache.InitRedis() in main when enabling cache middleware.
+     - In CacheOneYear, set resp.Writer = &bodyWriter{...}; run next(c); then read buffered body; do NOT restore writer before next(c).
+
+9) Cookie security flags by environment
+   - files: controllers/authController.go
+   - Issue: Cookies use Secure=true always; on HTTP localhost, cookies won’t persist. Same for logout.
+   - Fix: Gate Secure and SameSite via env (e.g., APP_ENV=production => Secure=true, SameSite=None). For dev, Secure=false.
+
+10) Validation and error handling
+   - files: multiple controllers (Bind + direct DB ops)
+   - Issue: Minimal validation and some ambiguous error mapping (e.g., GetDevice returns 404 for any error).
+   - Fix: Introduce request DTOs with validation (e.g., go-playground/validator), normalize error responses, and map gorm.ErrRecordNotFound to 404; others to 500.
+
+11) Logging consistency
+   - files: utils/logger.go, controllers/*
+   - Issue: logrus is configured, but handlers often use c.Logger(). Not unified and no request IDs.
+   - Fix: Configure Echo to use logrus or add request ID middleware; standardize structured logs.
+
+12) Documentation drift
+   - files: readme.md
+   - Issue: Mentions Bun ORM and Bun migrations; codebase uses GORM. Startup steps are mismatched.
+   - Fix: Update README to GORM instructions, remove Bun references, add Docker Compose steps, env docs, and auth/CORS notes.
+
+Other Notes and Opportunities
+- Security: Do not commit .env to VCS; it’s in .gitignore but ensure it’s not tracked. Move secrets (DB_PASSWORD, JWT_SECRET) to env or secret manager.
+- Routes: Consider rate limiting on sensitive endpoints (tollbooth middleware is present; wire it into routes where needed).
+- Concurrency: Background goroutine should honor context cancellation on shutdown.
+- Code cleanup: main.go defines a local cache map not used; controllers/airqualityController has a sync.Map "cache" not used for reads.
+- HTTP queries: Prefer context-aware DB ops (DB.WithContext(ctx)).
+- Chart labels: formatLabel("1 Month") uses "Wk dd" based on day-of-month; consider ISO week labels or week number.
+- CORS wildcard: AllowOrigins with patterns like "http://*" is not standard-compliant; Echo will echo back allowed origins from the list, but make them explicit.
+
+Quick Fix Proposals (sketches)
+1) Use env var for server port and init Redis optionally
+   - main.go
+     - read port := os.Getenv("SERVER_PORT"); if empty => "8080"
+     - optional: if USE_REDIS=true => cache.InitRedis()
+
+2) Standardize JWT
+   - Replace dgrijalva/jwt-go with golang-jwt/jwt/v4.
+   - Put JWT_SECRET in env; use same in login and middleware.
+   - In middlewares/jwt.go: after validation, set both c.Set("user", claims) and c.Set("userRole", claims.Role).
+
+3) Fix CacheOneYear handler
+   - Only swap resp.Writer to custom writer before next(c); after next completes, read buffer and store to Redis; do not reset writer prematurely.
+
+4) AutoMigrate only persisted entities
+   - Remove ChartData, DatasetChart, APIResponse from database.Init AutoMigrate.
+
+5) Add upsert for sensor_data
+   - DB migration: unique index on (dvid, timestamp). INSERT ... ON CONFLICT DO NOTHING (or UPDATE desired columns).
+
+6) Update README
+   - Reflect GORM usage, correct run steps, add env keys (JWT_SECRET, FRONTEND_ORIGINS), and document Docker Compose.
+
+Files/Findings Snapshot
+- main.go: CORS overly broad; hard-coded port; unused cache map; missing graceful shutdown.
+- routes/routes.go: Custom JWT middleware group ok; ensure import name matches package (package is "middleware" from path middlewares).
+- middlewares/jwt.go: Sets only userRole; use env secret; use RegisteredClaims in v4.
+- middlewares/one_year.go: Redis cache intercept bug; Redis not initialized.
+- database/db.go: AutoMigrates non-entities (ChartData, APIResponse).
+- controllers/adminController.go: Expects "user" in context; currently missing.
+- controllers/authController.go: Hard-coded secret; Secure cookie always true; consider SameSite.
+- services/authService.go: Deprecated dgrijalva/jwt-go; inconsistent secret.
+- models/sponsor.go, models/notification.go: Duplicate ID with gorm.Model.
+- services/airqualityService.go: No HTTP timeout; possible duplicate inserts; ioutil is deprecated (use io.ReadAll).
+- readme.md: Bun ORM mention; misaligned with codebase.
+
+Suggested Next Steps
+1) Security/config: unify JWT library/secret; fix cookies; restrict CORS via env.
+2) Stability: HTTP timeouts/backoff; upsert strategy; graceful shutdown; context usage.
+3) Data model cleanup: remove duplicate IDs; limit AutoMigrate to real entities.
+4) Middleware: initialize Redis when used; fix CacheOneYear; wire rate limiters on heavy endpoints.
+5) Docs: update README to match actual stack; add run scripts and env examples.
+
+If you want, I can implement the highest-priority fixes (JWT unification, AdminDashboard context fix, port/env config, and README update) in a follow-up PR.

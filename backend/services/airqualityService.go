@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/http"
 	"time"
-
+    "database/sql"
+    "fmt"
 	"yakkaw_dashboard/database"
 	"yakkaw_dashboard/models"
 )
@@ -283,4 +284,69 @@ func GetSensorData7Days() ([]models.SensorData, error) {
 	}
 
 	return sensorData, nil
+}
+
+// GetAirQualityOneYearSeriesByAddress : ข้อมูลรายวัน 1 ปี สำหรับ heatmap (filter ด้วย address)
+func GetAirQualityOneYearSeriesByAddress(address string) (map[string]interface{}, error) {
+	if address == "" {
+		return nil, fmt.Errorf("address is required")
+	}
+
+	now := time.Now()
+	from := now.AddDate(-1, 0, 0)
+
+	query := `
+		WITH t AS (
+			SELECT 
+				(to_timestamp(timestamp/1000) AT TIME ZONE 'Asia/Bangkok') AS ts,
+				NULLIF(pm25,0) AS pm25,
+				NULLIF(pm10,0) AS pm10
+			FROM sensor_data
+			WHERE address = ? AND to_timestamp(timestamp/1000) BETWEEN ? AND ?
+		)
+		SELECT 
+			date_trunc('day', ts) AS bucket,
+			ROUND(AVG(pm25)::numeric, 2) AS pm25_avg,
+			ROUND(AVG(pm10)::numeric, 2) AS pm10_avg,
+			COUNT(*) AS n
+		FROM t
+		GROUP BY bucket
+		ORDER BY bucket ASC;
+	`
+
+	rows, err := database.DB.Raw(query, address, from, now).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := []map[string]interface{}{}
+	for rows.Next() {
+		var bucket time.Time
+		var pm25, pm10 sql.NullFloat64
+		var n int
+		if err := rows.Scan(&bucket, &pm25, &pm10, &n); err != nil {
+			return nil, err
+		}
+		data := map[string]interface{}{
+			"timestamp": bucket.UnixMilli(),
+			"count":     n,
+		}
+		if pm25.Valid {
+			data["pm25"] = pm25.Float64
+		}
+		if pm10.Valid {
+			data["pm10"] = pm10.Float64
+		}
+		results = append(results, data)
+	}
+
+	return map[string]interface{}{
+		"address":      address,
+		"current_date": now,
+		"past_date":    from,
+		"bucket":       "day",
+		"data":         results,
+	}, nil
+
 }
