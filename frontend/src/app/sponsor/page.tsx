@@ -67,7 +67,7 @@ const SponsorsPage: React.FC = () => {
   return (
     <>
       <Navbar/>
-      <div className="bg-gradient-to-b from-amber-50 to-yellow-50 min-h-screen">
+      <div className="bg-gradient-to-b from-blue-50 to-indigo-50 min-h-screen">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,15 +76,15 @@ const SponsorsPage: React.FC = () => {
         >
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-amber-800">
+              <h1 className="text-3xl font-bold text-blue-800">
                 Manage Sponsors
               </h1>
-              <p className="text-amber-600 mt-1">
+              <p className="text-blue-600 mt-1">
                 Manage of Sponsors for Post, Edit and Delete
               </p>
             </div>
             <Button
-              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-700"
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-700"
               onClick={() => setIsCreateDialogOpen(true)}
             >
               <Plus size={16} /> Add Sponsors
@@ -99,7 +99,7 @@ const SponsorsPage: React.FC = () => {
           >
             <div className="rounded-xl md:col-span-6 relative shadow-md ">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-300 "
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 "
                 size={20}
               />
               <Input
@@ -128,9 +128,9 @@ const SponsorsPage: React.FC = () => {
               {filteredSponsors.length === 0 ? (
                 <motion.div
                   variants={itemVariants}
-                  className="text-center p-10 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-amber-100"
+                  className="text-center p-10 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-100"
                 >
-                  <h3 className="text-lg font-medium text-amber-700">
+                  <h3 className="text-lg font-medium text-blue-700">
                     No Sponsors found
                   </h3>
                 </motion.div>

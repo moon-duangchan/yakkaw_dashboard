@@ -43,7 +43,7 @@ const CategoryPage: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gradient-to-b from-emerald-50 to-green-50 min-h-screen">
+      <div className="bg-gradient-to-b from-blue-50 to-indigo-50 min-h-screen">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -52,13 +52,13 @@ const CategoryPage: React.FC = () => {
         >
           <div className="flex justify-between items-center mb-6">
            <div>
-            <h1 className="text-3xl font-bold text-emerald-800">Manage Categories</h1>
-            <p className="text-emerald-600 mt-1">
+            <h1 className="text-3xl font-bold text-blue-800">Manage Categories</h1>
+            <p className="text-blue-600 mt-1">
                 Manage Categories for Post, Edit and Delete
               </p>
               </div>
             <Button
-              className="bg-emerald-500 hover:bg-emerald-700"
+              className="bg-blue-500 hover:bg-blue-700"
               onClick={() => setIsCreateDialogOpen(true)}
             >
               <Plus size={16} /> Add Category
@@ -78,9 +78,9 @@ const CategoryPage: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="col-span-full text-center p-10 bg-white rounded-lg shadow-lg border border-green-100"
+                  className="col-span-full text-center p-10 bg-white rounded-lg shadow-lg border border-blue-100"
                 >
-                  <h3 className="text-lg font-medium text-green-700">
+                  <h3 className="text-lg font-medium text-blue-700">
                     No Categories found
                   </h3>
                 </motion.div>

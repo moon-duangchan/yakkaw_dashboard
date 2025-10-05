@@ -1,0 +1,47 @@
+Yakkaw Dashboard — Frontend Stack
+
+- Framework & Language
+  - next@15.1.7 (App Router)
+  - react@19.x, react-dom@19.x
+  - typescript@^5
+
+- Styling & UI
+  - tailwindcss@^3.4.1
+  - tailwindcss-animate@^1.0.7
+  - tailwind-merge@^3.0.1
+  - class-variance-authority@^0.7.1
+  - clsx@^2.1.1
+  - shadcn/ui (@shadcn/ui@^0.0.4)
+  - Radix UI primitives:
+    - @radix-ui/react-avatar, @radix-ui/react-dialog, @radix-ui/react-dropdown-menu,
+      @radix-ui/react-label, @radix-ui/react-separator, @radix-ui/react-slot
+  - Icons: lucide-react@^0.475.0
+
+- Data Fetching & Auth
+  - axios@^1.7.9 (utils/api.ts)
+  - Fetch API (built-in)
+  - js-cookie@^3.0.5, jsonwebtoken@^9.0.2
+  - qs@^6.14.0 (query serialization)
+
+- Charts & Visualization
+  - recharts@^2.15.1 (trend charts)
+  - chart.js@^4.5.0 + chartjs-chart-matrix@^3.0.0 (calendar heatmap)
+
+- Animation & Effects
+  - framer-motion@^12.5.0
+
+- Misc/Optional
+  - ogl@^1.0.11 (WebGL; present, may be unused)
+
+- Tooling
+  - eslint@^9, eslint-config-next@15.1.7
+  - @types/node@^20, @types/react@^19, @types/react-dom@^19, @types/jsonwebtoken@^9.0.8
+  - postcss@^8
+
+- Project Conventions
+  - App Router under src/app
+  - Reusable UI in src/components/ui
+  - Custom hooks in src/hooks
+  - Utilities in src/utils (e.g., api.ts)
+  - API base via NEXT_PUBLIC_API_BASE_URL (defaults to http://localhost:8080)
+

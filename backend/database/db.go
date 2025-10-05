@@ -18,10 +18,8 @@ var err error
 // Init initializes the database connection using environment variables
 func Init() {
 	// Load .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
+    // Load .env if present; do not fail if missing
+    _ = godotenv.Load()
 
 	// Get database connection details from environment variables
 	dbHost := os.Getenv("DB_HOST")

@@ -1,0 +1,84 @@
+Code Review — Tracking Page and Related Backend
+
+Scope
+- Frontend: tracking page (trend + heatmap + selections + caching)
+- Backend: chart/heatmap services and controllers impacting tracking
+
+Findings (What’s Solid)
+- Clear separation: selection UI (PlaceSelect), data transforms, rendering are reasonably isolated.
+- Robustness: null-safe chart transforms; abort controllers on fetches; client + server caches to reduce churn.
+- UX polish: last updated, sync and auto‑refresh, CSV export, province scoping, compare mode.
+- Backend support: metric param (pm25/pm10/aqi), timezone-aware bucketing, address/place filtering, short‑lived caching.
+
+Correctness and Data Semantics
+- Heatmap bands are PM2.5-specific even when metric=PM10/AQI.
+  Impact: misleading color scale for non‑PM2.5 metrics.
+  Fix: pass `metric` into CalendarHeatmap and select bands per metric (or compute a legend dynamically).
+- Today query window: ensure every date_trunc and window PARTITION uses the same time basis.
+  You changed SELECT time_label to Asia/Bangkok; make all date_trunc(...) AT TIME ZONE 'Asia/Bangkok' consistently, including inside window functions, to avoid bucket drift.
+- Compare mode + “Last updated” shows only the first selected place.
+  Improvement: compute min/max across selected, or present a small info dialog listing each.
+
+Performance
+- Client cache (Map) is unbounded.
+  Risk: memory growth across many filters/places.
+  Fix: add a tiny LRU (cap ~30 entries) or prune entries older than TTL on set.
+- Places suggestions use heavy useMemo under render; fine now, but consider moving the scorer into a small helper to keep render paths light.
+- Server queries use to_timestamp for filtering; good for correctness, but integer timestamp range filters are faster with indexes.
+  Future: compute epoch_ms_from/to in Go and use `timestamp BETWEEN $from AND $to` so Postgres can use btree index on `timestamp`.
+
+UX and Clarity
+- Compare mode affordance is good (chips shown); echo compare list near filters for visibility.
+- Export CSV works; consider adding UTF‑8 BOM for Excel and include metric/range in the header row for clarity.
+- Deep link state: correct push/restore without loops.
+
+Maintainability and Structure
+- Tracking page is growing; extract small hooks:
+  - useChartData({range, metric, filters})
+  - useHeatmapData({metric, filter})
+  - usePlacesIndex({province})
+  Benefits: easier testing, smaller component, simpler future changes.
+- Consolidate constants (RANGES, METRICS map with labels + thresholds) into a shared constants module.
+
+Backend Observations
+- Metric concatenation into SQL is sanitized by allowlist — good; keep this pattern.
+- Controller caching (30s) and places cache (5m) are helpful for load.
+- Upsert noise: INSERT ... ON CONFLICT updates even when values don’t change.
+  Optional: add a WHERE clause to skip no‑op updates (see snippet) to cut write amplification and PG log noise.
+- Security: /pipeline/refresh is public; in production, move under /admin with JWT + a basic rate limit.
+
+Accessibility
+- PlaceSelect keyboard support (↑/↓/Enter/Esc) is implemented.
+  Next: add aria roles/attributes (listbox/option, aria-expanded, aria-activedescendant) for screen readers.
+- Ensure visible focus states remain (Tailwind defaults OK).
+
+Testing Gaps (Quick Wins)
+- Transform test for toChartSeriesRows (labels/datasets alignment) and compare-mode merge (union labels, fill zeros).
+- Snapshot test for CalendarHeatmap (7 rows fixed; columns by weeks) to prevent layout regressions.
+
+Targeted Fixes and Enhancements (Recommended Next)
+1) Heatmap metric bands (high impact, low risk)
+   - Teach CalendarHeatmap to accept `metric` and compute color bands per metric.
+   - Adjust tooltip label to display the active metric (e.g., “AQI 83”).
+2) Today bucketing consistency
+   - Ensure all date_trunc invocations (including window PARTITION BY) use `(to_timestamp(timestamp/1000) AT TIME ZONE 'Asia/Bangkok')` consistently.
+3) LRU for client caches
+   - Wrap Map with a tiny LRU (max ~30 entries) or prune items older than TTL on set.
+
+Example Snippets
+- Distinct‑update upsert WHERE (server)
+  ON CONFLICT (dvid, timestamp) DO UPDATE SET
+    ...same columns...
+  WHERE ROW(sensor_data.deviceid, sensor_data.status, sensor_data.latitude, sensor_data.longitude, sensor_data.place, sensor_data.address, sensor_data.model, sensor_data.deploydate, sensor_data.contactname, sensor_data.contactphone, sensor_data.note, sensor_data.ddate, sensor_data.dtime, sensor_data.av24h, sensor_data.av12h, sensor_data.av6h, sensor_data.av3h, sensor_data.av1h, sensor_data.pm25, sensor_data.pm10, sensor_data.pm100, sensor_data.aqi, sensor_data.temperature, sensor_data.humidity, sensor_data.pres, sensor_data.color, sensor_data.trend)
+  IS DISTINCT FROM
+  ROW(EXCLUDED.deviceid, EXCLUDED.status, EXCLUDED.latitude, EXCLUDED.longitude, EXCLUDED.place, EXCLUDED.address, EXCLUDED.model, EXCLUDED.deploydate, EXCLUDED.contactname, EXCLUDED.contactphone, EXCLUDED.note, EXCLUDED.ddate, EXCLUDED.dtime, EXCLUDED.av24h, EXCLUDED.av12h, EXCLUDED.av6h, EXCLUDED.av3h, EXCLUDED.av1h, EXCLUDED.pm25, EXCLUDED.pm10, EXCLUDED.pm100, EXCLUDED.aqi, EXCLUDED.temperature, EXCLUDED.humidity, EXCLUDED.pres, EXCLUDED.color, EXCLUDED.trend)
+
+- Consistent Asia/Bangkok bucketing (server)
+  date_trunc('hour', (to_timestamp(timestamp/1000) AT TIME ZONE 'Asia/Bangkok'))
+  -- Use the same expression in SELECT and window functions.
+
+Conclusion
+- The page is functionally strong and performant for development.
+- Biggest correctness gap: heatmap color scale for non‑PM2.5 metrics; minor TZ consistency in Today bucketing.
+- Implement the three “next” items above and consider indexes + pipeline hardening for production.
+

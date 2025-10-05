@@ -68,7 +68,7 @@ const NewsPage: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gradient-to-b from-purple-50 to-indigo-50 min-h-screen">
+      <div className="bg-gradient-to-b from-blue-50 to-indigo-50 min-h-screen">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -77,13 +77,13 @@ const NewsPage: React.FC = () => {
         >
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-purple-800">Manage News</h1>
-              <p className="text-purple-600 mt-1">
+              <h1 className="text-3xl font-bold text-blue-800">Manage News</h1>
+              <p className="text-blue-600 mt-1">
                 Manage News for Post, Edit and Delete
               </p>
             </div>
             <Button
-              className="flex items-center gap-2 bg-purple-500 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-300"
               onClick={() => setIsCreateDialogOpen(true)}
             >
               <Plus size={16} /> Add News
@@ -98,7 +98,7 @@ const NewsPage: React.FC = () => {
           >
             <div className="rounded-xl md:col-span-6 relative shadow-lg hover:shadow-xl transition-all duration-300">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400"
                 size={20}
               />
               <Input
@@ -127,9 +127,9 @@ const NewsPage: React.FC = () => {
               {filteredNews.length === 0 ? (
                 <motion.div
                   variants={itemVariants}
-                  className="text-center p-10 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-purple-100"
+                  className="text-center p-10 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-100"
                 >
-                  <h3 className="text-lg font-medium text-purple-700">
+                  <h3 className="text-lg font-medium text-blue-700">
                     No News found
                   </h3>
                 </motion.div>

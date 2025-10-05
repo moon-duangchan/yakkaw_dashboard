@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, Bell, Settings, LogOut, Home, Gift, Users, Newspaper, FolderOpen } from "lucide-react";
+import { Menu, Bell, Settings, LogOut, Home, Gift, Users, Newspaper, FolderOpen, BarChart3 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +55,7 @@ const Navbar = () => {
   const NavLinks = () => (
     <>
       {[
+        { href: "/tracking", icon: BarChart3, label: "Tracking" },
         { href: "/notifications", icon: Bell, label: "Notifications" },
         { href: "/sponsor", icon: Gift, label: "Sponsor" },
         { href: "/news", icon: Newspaper, label: "News" },
@@ -82,6 +83,7 @@ const Navbar = () => {
     <>
       {[
         { href: "/dashboard", icon: Home, label: "Dashboard" },
+        { href: "/tracking", icon: BarChart3, label: "Tracking" },
         { href: "/notifications", icon: Bell, label: "Notifications" },
         { href: "/sponsor", icon: Gift, label: "Sponsor" },
         { href: "/news", icon: Newspaper, label: "News" },

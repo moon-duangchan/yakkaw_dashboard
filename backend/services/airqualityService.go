@@ -1,15 +1,15 @@
 package services
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"time"
+    "encoding/json"
+    "io/ioutil"
+    "log"
+    "net/http"
+    "time"
     "database/sql"
     "fmt"
-	"yakkaw_dashboard/database"
-	"yakkaw_dashboard/models"
+    "yakkaw_dashboard/database"
+    "yakkaw_dashboard/models"
 )
 
 // FetchAndStoreData ดึงข้อมูลจาก API แล้วเก็บลง DB (ด้วย Raw SQL ผ่าน GORM)
@@ -37,31 +37,137 @@ func FetchAndStoreData(apiURL string) {
 	for _, data := range apiResp.Response {
 
 		// GORM: Exec() จะคืนค่าเป็น *gorm.DB
-		result := database.DB.Exec(`
-			INSERT INTO sensor_data (
-				dvid, deviceid, status, latitude, longitude, place, address, model,
-				deploydate, contactname, contactphone, note, ddate, dtime, timestamp,
-				av24h, av12h, av6h, av3h, av1h, pm25, pm10, pm100, aqi,
-				temperature, humidity, pres, color, trend
-			) VALUES (
-				?, ?, ?, ?, ?, ?, ?, ?,
-				?, ?, ?, ?, ?, ?, ?,
-				?, ?, ?, ?, ?, ?, ?, ?, ?,
-				?, ?, ?, ?, ?
-			)
-		`,
-			data.DVID, data.DeviceID, data.Status, data.Latitude, data.Longitude,
-			data.Place, data.Address, data.Model, data.DeployDate, data.ContactName,
-			data.ContactPhone, data.Note, data.DDate, data.DTime, data.Timestamp,
-			data.Av24h, data.Av12h, data.Av6h, data.Av3h, data.Av1h, data.PM25,
-			data.PM10, data.PM100, data.AQI, data.Temperature, data.Humidity,
-			data.Pres, data.Color, data.Trend,
-		)
+        result := database.DB.Exec(`
+            INSERT INTO sensor_data (
+                dvid, deviceid, status, latitude, longitude, place, address, model,
+                deploydate, contactname, contactphone, note, ddate, dtime, timestamp,
+                av24h, av12h, av6h, av3h, av1h, pm25, pm10, pm100, aqi,
+                temperature, humidity, pres, color, trend
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?
+            )
+            ON CONFLICT (dvid, timestamp) DO UPDATE SET
+                deviceid = EXCLUDED.deviceid,
+                status = EXCLUDED.status,
+                latitude = EXCLUDED.latitude,
+                longitude = EXCLUDED.longitude,
+                place = EXCLUDED.place,
+                address = EXCLUDED.address,
+                model = EXCLUDED.model,
+                deploydate = EXCLUDED.deploydate,
+                contactname = EXCLUDED.contactname,
+                contactphone = EXCLUDED.contactphone,
+                note = EXCLUDED.note,
+                ddate = EXCLUDED.ddate,
+                dtime = EXCLUDED.dtime,
+                av24h = EXCLUDED.av24h,
+                av12h = EXCLUDED.av12h,
+                av6h = EXCLUDED.av6h,
+                av3h = EXCLUDED.av3h,
+                av1h = EXCLUDED.av1h,
+                pm25 = EXCLUDED.pm25,
+                pm10 = EXCLUDED.pm10,
+                pm100 = EXCLUDED.pm100,
+                aqi = EXCLUDED.aqi,
+                temperature = EXCLUDED.temperature,
+                humidity = EXCLUDED.humidity,
+                pres = EXCLUDED.pres,
+                color = EXCLUDED.color,
+                trend = EXCLUDED.trend
+        `,
+            data.DVID, data.DeviceID, data.Status, data.Latitude, data.Longitude,
+            data.Place, data.Address, data.Model, data.DeployDate, data.ContactName,
+            data.ContactPhone, data.Note, data.DDate, data.DTime, data.Timestamp,
+            data.Av24h, data.Av12h, data.Av6h, data.Av3h, data.Av1h, data.PM25,
+            data.PM10, data.PM100, data.AQI, data.Temperature, data.Humidity,
+            data.Pres, data.Color, data.Trend,
+        )
 
 		if result.Error != nil {
 			log.Printf("Error inserting data: %v", result.Error)
 		}
 	}
+}
+
+// FetchAndStoreDevices fetches latest device readings and upserts into sensor_data.
+// Returns number of records processed.
+func FetchAndStoreDevices(apiURL string) (int, error) {
+    resp, err := http.Get(apiURL)
+    if err != nil {
+        return 0, err
+    }
+    defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        return 0, err
+    }
+
+    var apiResp models.APIResponse
+    if err := json.Unmarshal(body, &apiResp); err != nil {
+        return 0, err
+    }
+
+    processed := 0
+    for _, data := range apiResp.Response {
+        result := database.DB.Exec(`
+            INSERT INTO sensor_data (
+                dvid, deviceid, status, latitude, longitude, place, address, model,
+                deploydate, contactname, contactphone, note, ddate, dtime, timestamp,
+                av24h, av12h, av6h, av3h, av1h, pm25, pm10, pm100, aqi,
+                temperature, humidity, pres, color, trend
+            ) VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?
+            )
+            ON CONFLICT (dvid, timestamp) DO UPDATE SET
+                deviceid = EXCLUDED.deviceid,
+                status = EXCLUDED.status,
+                latitude = EXCLUDED.latitude,
+                longitude = EXCLUDED.longitude,
+                place = EXCLUDED.place,
+                address = EXCLUDED.address,
+                model = EXCLUDED.model,
+                deploydate = EXCLUDED.deploydate,
+                contactname = EXCLUDED.contactname,
+                contactphone = EXCLUDED.contactphone,
+                note = EXCLUDED.note,
+                ddate = EXCLUDED.ddate,
+                dtime = EXCLUDED.dtime,
+                av24h = EXCLUDED.av24h,
+                av12h = EXCLUDED.av12h,
+                av6h = EXCLUDED.av6h,
+                av3h = EXCLUDED.av3h,
+                av1h = EXCLUDED.av1h,
+                pm25 = EXCLUDED.pm25,
+                pm10 = EXCLUDED.pm10,
+                pm100 = EXCLUDED.pm100,
+                aqi = EXCLUDED.aqi,
+                temperature = EXCLUDED.temperature,
+                humidity = EXCLUDED.humidity,
+                pres = EXCLUDED.pres,
+                color = EXCLUDED.color,
+                trend = EXCLUDED.trend
+        `,
+            data.DVID, data.DeviceID, data.Status, data.Latitude, data.Longitude,
+            data.Place, data.Address, data.Model, data.DeployDate, data.ContactName,
+            data.ContactPhone, data.Note, data.DDate, data.DTime, data.Timestamp,
+            data.Av24h, data.Av12h, data.Av6h, data.Av3h, data.Av1h, data.PM25,
+            data.PM10, data.PM100, data.AQI, data.Temperature, data.Humidity,
+            data.Pres, data.Color, data.Trend,
+        )
+        if result.Error != nil {
+            log.Printf("ingest error dvid=%s: %v", data.DVID, result.Error)
+            continue
+        }
+        processed++
+    }
+    return processed, nil
 }
 
 // GetAirQuality24Hours ค่าเฉลี่ย 24 ชั่วโมง พร้อมระบุช่วงเวลาที่ใช้ดึงข้อมูล
@@ -349,4 +455,68 @@ func GetAirQualityOneYearSeriesByAddress(address string) (map[string]interface{}
 		"data":         results,
 	}, nil
 
+}
+
+// GetAirQualityOneYearSeriesByProvince: daily buckets for last 1 year filtered by province (address ILIKE)
+func GetAirQualityOneYearSeriesByProvince(province string) (map[string]interface{}, error) {
+    if province == "" {
+        return nil, fmt.Errorf("province is required")
+    }
+
+    now := time.Now()
+    from := now.AddDate(-1, 0, 0)
+
+    query := `
+        WITH t AS (
+            SELECT 
+                (to_timestamp(timestamp/1000) AT TIME ZONE 'Asia/Bangkok') AS ts,
+                NULLIF(pm25,0) AS pm25,
+                NULLIF(pm10,0) AS pm10
+            FROM sensor_data
+            WHERE address ILIKE ? AND to_timestamp(timestamp/1000) BETWEEN ? AND ?
+        )
+        SELECT 
+            date_trunc('day', ts) AS bucket,
+            ROUND(AVG(pm25)::numeric, 2) AS pm25_avg,
+            ROUND(AVG(pm10)::numeric, 2) AS pm10_avg,
+            COUNT(*) AS n
+        FROM t
+        GROUP BY bucket
+        ORDER BY bucket ASC;
+    `
+
+    rows, err := database.DB.Raw(query, "%"+province+"%", from, now).Rows()
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    results := []map[string]interface{}{}
+    for rows.Next() {
+        var bucket time.Time
+        var pm25, pm10 sql.NullFloat64
+        var n int
+        if err := rows.Scan(&bucket, &pm25, &pm10, &n); err != nil {
+            return nil, err
+        }
+        data := map[string]interface{}{
+            "timestamp": bucket.UnixMilli(),
+            "count":     n,
+        }
+        if pm25.Valid {
+            data["pm25"] = pm25.Float64
+        }
+        if pm10.Valid {
+            data["pm10"] = pm10.Float64
+        }
+        results = append(results, data)
+    }
+
+    return map[string]interface{}{
+        "province":     province,
+        "current_date": now,
+        "past_date":    from,
+        "bucket":       "day",
+        "data":         results,
+    }, nil
 }

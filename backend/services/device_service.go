@@ -21,14 +21,14 @@ func CreateDevice(device models.Device) (models.Device, error) {
 }
 
 func GetDeviceByDVID(dvid string) (models.Device, error) {
-	var device models.Device
-	if err := database.DB.Where("dv_id = ?", dvid).First(&device).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return device, nil // Return nil if not found
-		}
-		return device, err
-	}
-	return device, nil
+    var device models.Device
+    if err := database.DB.Where("dv_id = ?", dvid).First(&device).Error; err != nil {
+        if err == gorm.ErrRecordNotFound {
+            return device, gorm.ErrRecordNotFound
+        }
+        return device, err
+    }
+    return device, nil
 }
 
 func GetAllDevices() ([]models.Device, error) {

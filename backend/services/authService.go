@@ -1,12 +1,19 @@
 package services
 
 import (
+    "os"
     "time"
-    "github.com/dgrijalva/jwt-go"
+    jwt "github.com/golang-jwt/jwt/v4"
     "yakkaw_dashboard/models"
 )
 
-var jwtSecret = []byte("yourSecretKey")
+func jwtSecretBytes() []byte {
+    s := os.Getenv("JWT_SECRET")
+    if s == "" {
+        s = "your-secret-key"
+    }
+    return []byte(s)
+}
 
 func GenerateJWT(user models.User) (string, error) {
     token := jwt.New(jwt.SigningMethodHS256)
@@ -15,7 +22,7 @@ func GenerateJWT(user models.User) (string, error) {
     claims["role"] = user.Role
     claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
-    tokenString, err := token.SignedString(jwtSecret)
+    tokenString, err := token.SignedString(jwtSecretBytes())
     if err != nil {
         return "", err
     }
@@ -24,6 +31,6 @@ func GenerateJWT(user models.User) (string, error) {
 
 func ValidateToken(tokenString string) (*jwt.Token, error) {
     return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-        return jwtSecret, nil
+        return jwtSecretBytes(), nil
     })
 }
