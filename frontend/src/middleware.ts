@@ -22,6 +22,8 @@ export const config = {
     matcher: [
         '/',
         '/dashboard/:path*',
+        '/qr-login',
+        '/qr-create-device',
         '/profile/:path*',
         '/tracking/:path*',
         '/notifications/:path*',

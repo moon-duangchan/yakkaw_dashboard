@@ -50,6 +50,9 @@ func Init(e *echo.Echo) {
 	adminGroup := e.Group("/admin")
 	adminGroup.Use(middleware.JWTMiddleware) // Protect all admin routes
 
+	// QR login: admin generates short-lived token
+	adminGroup.POST("/qr/generate", controllers.GenerateQRLogin)
+
 	adminGroup.POST("/devices", controllers.CreateDevice)
 	adminGroup.PUT("/devices/:dvid", controllers.UpdateDevice)
 	adminGroup.DELETE("/devices/:id", controllers.DeleteDevice)
@@ -114,4 +117,7 @@ func Init(e *echo.Echo) {
 
 	// 🔹 Get Latest Air Quality
 	e.GET("/api/airquality/latest", controllers.GetLatestAirQuality)
+
+	// Public QR consume endpoint (sets cookie then redirects to frontend)
+	e.GET("/qr/consume", controllers.ConsumeQRLogin)
 }

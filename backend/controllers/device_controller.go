@@ -10,10 +10,14 @@ import (
 )
 
 func CreateDevice(c echo.Context) error {
-	var device models.Device
-	if err := c.Bind(&device); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
-	}
+    // Enforce admin role for device creation
+    if role, _ := c.Get("userRole").(string); role != "admin" {
+        return c.JSON(http.StatusForbidden, map[string]string{"error": "admin role required"})
+    }
+    var device models.Device
+    if err := c.Bind(&device); err != nil {
+        return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+    }
 
 	createdDevice, err := services.CreateDevice(device)
 	if err != nil {
