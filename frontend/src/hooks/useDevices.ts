@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Device } from "@/constant/deviceData";
-import axios from "axios";
+import { api } from "../../utils/api";
 
 export const useDevices = () => {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -15,10 +15,8 @@ export const useDevices = () => {
   const fetchDevices = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:8080/devices");
-      if (!response.ok) throw new Error("อ้าย ๆ มันโหลดบ่ด้าย");
-      const data = await response.json();
-      setDevices(data || []);
+      const response = await api.get<Device[]>("/devices");
+      setDevices(response.data || []);
       setError("");
     } catch (err) {
       setError((err as Error).message);
@@ -29,13 +27,9 @@ export const useDevices = () => {
 
   const handleCreate = async (device: Device) => {
     try {
-      const response = await fetch("http://localhost:8080/admin/devices", {
-        method: "POST",
+      await api.post("/admin/devices", device, {
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(device),
       });
-      if (!response.ok) throw new Error("Failed to create device");
       await fetchDevices();
       setIsCreateDialogOpen(false);
       setCurrentDevice(null);
@@ -48,14 +42,9 @@ export const useDevices = () => {
   const handleUpdate = async (device: Device) => {
     if (!device || !device.dvid) return;
     try {
-      await axios.put(
-        `http://localhost:8080/admin/devices/${device.dvid}`,
-        device,
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      );
+      await api.put(`/admin/devices/${device.dvid}`, device, {
+        headers: { "Content-Type": "application/json" },
+      });
       await fetchDevices();
       setIsEditDialogOpen(false);
       setCurrentDevice(null);
@@ -68,9 +57,7 @@ export const useDevices = () => {
   const handleDelete = async () => {
     if (!deviceToDelete) return;
     try {
-      await axios.delete(`http://localhost:8080/admin/devices/${deviceToDelete}`, {
-        withCredentials: true,
-      });
+      await api.delete(`/admin/devices/${deviceToDelete}`);
       await fetchDevices();
       setIsConfirmDialogOpen(false);
       setDeviceToDelete(null);

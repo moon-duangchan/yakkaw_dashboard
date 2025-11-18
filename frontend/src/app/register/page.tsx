@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Iridescence from '@/components/Iridescence';
+import { api } from "../../../utils/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -35,27 +36,19 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:8080/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
-        }),
+      await api.post('/register', {
+        username: formData.username,
+        password: formData.password,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
       // Registration successful, redirect to login
       router.push('/login');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      const message =
+        (err as any)?.response?.data?.error ||
+        (err as any)?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Registration failed';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

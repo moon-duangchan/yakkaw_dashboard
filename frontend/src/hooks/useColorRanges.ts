@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { api } from "../../utils/api";
 
 interface ColorRange {
   ID: number;
@@ -22,8 +22,7 @@ export const useColorRanges = () => {
   const fetchColorRanges = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("http://localhost:8080/colorranges");
-      if (response.status !== 200 && response.status !== 201) throw new Error("Failed to fetch color ranges");
+      const response = await api.get<ColorRange[]>("/colorranges");
       setColorRanges(response.data || []);
     } catch (err: any) {
       setError(err?.response?.data?.message || err.message);
@@ -34,15 +33,9 @@ export const useColorRanges = () => {
 
   const handleCreate = async (colorRange: ColorRange) => {
     try {
-      const response = await axios.post(
-        "http://localhost:8080/admin/colorranges",
-        colorRange,
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      );
-      if (response.status !== 200 && response.status !== 201) throw new Error("Failed to create color range");
+      await api.post("/admin/colorranges", colorRange, {
+        headers: { "Content-Type": "application/json" },
+      });
       await fetchColorRanges();
       setIsCreateDialogOpen(false);
       setCurrentColorRange(null);
@@ -56,15 +49,9 @@ export const useColorRanges = () => {
    
     if (!currentColorRange || !currentColorRange.ID) return;
     try {
-      const response = await axios.put(
-        `http://localhost:8080/admin/colorranges/${currentColorRange.ID}`,
-        currentColorRange,
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        }
-      );
-      if (response.status !== 200 && response.status !== 201) throw new Error("Failed to update color range");
+      await api.put(`/admin/colorranges/${currentColorRange.ID}`, currentColorRange, {
+        headers: { "Content-Type": "application/json" },
+      });
       await fetchColorRanges();
       setIsEditDialogOpen(false);
       setCurrentColorRange(null);
@@ -76,13 +63,7 @@ export const useColorRanges = () => {
   const handleDelete = async () => {
     if (!colorRangeToDelete) return;
     try {
-      const response = await axios.delete(
-        `http://localhost:8080/admin/colorranges/${colorRangeToDelete}`,
-        {
-          withCredentials: true,
-        }
-      );
-      if (response.status !== 200 && response.status !== 204) throw new Error("Failed to delete color range");
+      await api.delete(`/admin/colorranges/${colorRangeToDelete}`);
       await fetchColorRanges();
       setIsConfirmDialogOpen(false);
       setColorRangeToDelete(null);

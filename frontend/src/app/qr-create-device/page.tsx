@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Plus } from "lucide-react";
+import { api } from "../../../utils/api";
 
 type Device = {
   dvid: string;
@@ -53,9 +53,8 @@ export default function QRCreateDevicePage() {
     setError("");
     setSuccess("");
     try {
-      await axios.post("http://localhost:8080/admin/devices", device, {
+      await api.post("/admin/devices", device, {
         headers: { "Content-Type": "application/json" },
-        withCredentials: true,
       });
       setSuccess("Device created successfully");
       // Optional: go to device list
@@ -138,4 +137,3 @@ export default function QRCreateDevicePage() {
     </div>
   );
 }
-

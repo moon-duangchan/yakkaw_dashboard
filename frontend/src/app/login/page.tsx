@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
 import qs from 'qs';
 import { Loader2, Eye, EyeOff, User, Lock, LogIn } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Iridescence from '@/components/Iridescence';
+import { api } from "../../../utils/api";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -67,8 +67,8 @@ const LoginPage = () => {
     setError('');
   
     try {
-      const response = await axios.post(
-        'http://localhost:8080/login',
+      await api.post(
+        '/login',
         qs.stringify({
           username: formData.username.trim(),
           password: formData.password,
@@ -78,10 +78,9 @@ const LoginPage = () => {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           timeout: 10000,
-          withCredentials: true,
         }
       );
-  
+
       // Handle Remember Me functionality
       if (formData.rememberMe) {
         localStorage.setItem('rememberedUsername', formData.username);
@@ -93,7 +92,9 @@ const LoginPage = () => {
     } catch (err) {
       setLoginAttempts(prev => prev + 1);
       setError(
-        err.response?.data?.message ||
+        (err as any)?.response?.data?.message ||
+        (err as any)?.response?.data?.error ||
+        (err as Error)?.message ||
         'Failed to login. Please check your credentials and try again.'
       );
     } finally {

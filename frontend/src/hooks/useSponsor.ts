@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect } from "react";
 import { Sponsor } from "@/constant/sponsorData";
+import { api } from "../../utils/api";
 
 export const useSponsors = () => {
   const [filteredSponsors, setFilteredSponsors] = useState<Sponsor[]>([]);
@@ -22,8 +23,7 @@ export const useSponsors = () => {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("http://localhost:8080/me", { credentials: "include" });
-      if (!response.ok) throw new Error("Unauthorized");
+      await api.get("/me");
     } catch (err) {
       window.location.href = "/login";
     }
@@ -32,14 +32,10 @@ export const useSponsors = () => {
   const fetchSponsors = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:8080/sponsors", {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to fetch sponsors");
-      const data = await response.json();
-      setSponsors(data || []);
+      const response = await api.get<Sponsor[]>("/sponsors");
+      setSponsors(response.data || []);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -48,13 +44,9 @@ export const useSponsors = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:8080/admin/sponsors", {
-        method: "POST",
+      await api.post("/admin/sponsors", currentSponsor, {
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(currentSponsor),
       });
-      if (!response.ok) throw new Error("Failed to create sponsors");
       await fetchSponsors();
       setIsCreateDialogOpen(false);
       setCurrentSponsors({ id: null, name: "", description: "", logo: "" });
@@ -67,13 +59,9 @@ export const useSponsors = () => {
     e.preventDefault();
     if (!currentSponsor.id) return;
     try {
-      const response = await fetch(`http://localhost:8080/admin/sponsors/${currentSponsor.id}`, {
-        method: "PUT",
+      await api.put(`/admin/sponsors/${currentSponsor.id}`, currentSponsor, {
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(currentSponsor),
       });
-      if (!response.ok) throw new Error("Failed to update sponsors");
       await fetchSponsors();
       setIsEditDialogOpen(false);
       setCurrentSponsors({ id: null, name: "", description: "", logo: "" });
@@ -85,11 +73,7 @@ export const useSponsors = () => {
   const handleDelete = async () => {
     if (!sponsorsToDelete) return;
     try {
-      const response = await fetch(`http://localhost:8080/admin/sponsors/${sponsorsToDelete}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to delete sponsors");
+      await api.delete(`/admin/sponsors/${sponsorsToDelete}`);
       await fetchSponsors();
       setIsConfirmDialogOpen(false);
       setSponsorsToDelete(null);

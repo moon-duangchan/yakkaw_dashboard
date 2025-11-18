@@ -43,7 +43,7 @@ const DevicePage: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-gradient-to-b from-blue-50 to-indigo-50 min-h-screen flex items-center justify-center">
+      <div className="bg-gradient-to-b from-blue-50 to-indigo-50 min-h-screen flex justify-center pt-4">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -52,8 +52,12 @@ const DevicePage: React.FC = () => {
         >
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-blue-800">Manage Devices</h1>
-              <p className="text-blue-600 mt-1">Manage DVID, address, and GPS coordinates</p>
+              <h1 className="text-3xl font-bold text-blue-800">
+                Manage Devices
+              </h1>
+              <p className="text-blue-600 mt-1">
+                Manage DVID, address, and GPS coordinates
+              </p>
             </div>
             <Button
               className="bg-blue-500 hover:bg-blue-700"
@@ -89,22 +93,45 @@ const DevicePage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200 border border-gray-300 rounded-lg bg-white shadow">
                 <thead className="bg-blue-100">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">DVID</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Address</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Latitude</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Longitude</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Place</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Models</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Contact Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Contact Phone</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Deploy Date</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      DVID
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Address
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Latitude
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Longitude
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Place
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Models
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Contact Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Contact Phone
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Deploy Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-blue-800">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {devices.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="text-center p-6 text-blue-600">
+                      <td
+                        colSpan={10}
+                        className="text-center p-6 text-blue-600"
+                      >
                         No Devices found
                       </td>
                     </tr>
@@ -119,14 +146,24 @@ const DevicePage: React.FC = () => {
                         className="hover:bg-gray-50"
                       >
                         <td className="px-4 py-3">{device.dvid}</td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{device.address}</td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {device.address}
+                        </td>
                         <td className="px-4 py-3 text-sm">{device.latitude}</td>
-                        <td className="px-4 py-3 text-sm">{device.longitude}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {device.longitude}
+                        </td>
                         <td className="px-4 py-3 text-sm">{device.place}</td>
                         <td className="px-4 py-3 text-sm">{device.models}</td>
-                        <td className="px-4 py-3 text-sm">{device.contact_name}</td>
-                        <td className="px-4 py-3 text-sm">{device.contact_phone}</td>
-                        <td className="px-4 py-3 text-sm">{new Date(device.deploy_date).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {device.contact_name}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {device.contact_phone}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {new Date(device.deploy_date).toLocaleDateString()}
+                        </td>
                         <td className="px-4 py-3 flex gap-2">
                           <Button
                             className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs"

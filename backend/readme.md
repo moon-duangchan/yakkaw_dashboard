@@ -37,14 +37,19 @@ go mod tidy
 ```
 
 ### Configure Environment Variables
-Create a `.env` file in the project root and set the following variables:
+Copy the sample file and adjust the values for your environment (including any ngrok domain you plan to expose):
+```sh
+cp .env.example .env
+```
+
+At minimum set the database credentials plus:
 ```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=your_user
-DB_PASSWORD=your_password
-DB_NAME=yakkaw_db
 SERVER_PORT=8080
+FRONTEND_ORIGINS=http://localhost:3000,https://your-ngrok-domain.ngrok.io
+JWT_SECRET=replace-with-strong-secret
+API_URL=https://yakkaw.mfu.ac.th/api/yakkaw/devices
+QR_CONSUME_BASE_URL=http://localhost:8080
+QR_DEFAULT_REDIRECT=http://localhost:3000/qr-create-device
 ```
 
 ### Run Database Migrations
@@ -78,6 +83,70 @@ The server will be running at `http://localhost:8080`.
 | POST   | `/admin/sponsors`           | Create a sponsor |
 | PUT    | `/admin/sponsors/:id`       | Update a sponsor |
 | DELETE | `/admin/sponsors/:id`       | Delete a sponsor |
+
+## API Usage Examples
+The snippets below assume the server runs on `http://localhost:8080`.
+
+### Login with curl
+Authenticate once and store the issued JWT cookie for subsequent admin calls:
+
+```bash
+curl -i -X POST http://localhost:8080/login \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'username=admin' \
+  -d 'password=admin-password' \
+  -c cookies.txt
+```
+
+- Replace `admin` / `admin-password` with your credentials.
+- The `-c cookies.txt` flag saves the `access_token` cookie, which is required when calling `/admin/...` endpoints.
+
+### Color Range Reference
+Color ranges recommended for PM2.5 values:
+
+| Min | Max | Hex Color |
+|-----|-----|-----------|
+| 91  | 500 | `#FF2C2C` |
+| 51  | 90  | `#F26B0F` |
+| 38  | 50  | `#FECC17` |
+| 26  | 37  | `#46DA01` |
+| 0   | 25  | `#2EA8FF` |
+
+To create a color range (repeat for each row above):
+
+```bash
+curl -X POST http://localhost:8080/admin/colorranges \
+  -H 'Content-Type: application/json' \
+  -b cookies.txt \
+  -d '{
+    "min": 91,
+    "max": 500,
+    "color": "#FF2C2C"
+  }'
+```
+
+- The saved cookie from the login step is reused via `-b cookies.txt`.
+- Update the `min`, `max`, and `color` payload for the remaining range entries.
+
+### Example: Add News Item
+The payload mirrors the `models.News` structure (title, description, image, url, date, category_id).
+
+```bash
+curl -X POST http://localhost:8080/admin/news \
+  -H 'Content-Type: application/json' \
+  -b cookies.txt \
+  -d '{
+    "title": "PM2.5 Alert Level Raised",
+    "description": "Provincial officers have issued a warning for high PM2.5 levels this week.",
+    "image": "https://example.com/images/pm25-alert.png",
+    "url": "https://example.com/news/pm25-alert",
+    "date": "2024-06-01T09:00:00Z",
+    "category_id": 1
+  }'
+```
+
+- `category_id` must reference an existing category.
+- Omit `date` to default to the API server time.
 
 ## Running with Docker (Optional)
 ### Build and Run Docker Containers

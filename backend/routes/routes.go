@@ -3,11 +3,10 @@ package routes
 import (
 	"yakkaw_dashboard/controllers"
 	"yakkaw_dashboard/database"
-	"yakkaw_dashboard/middlewares"
+	middleware "yakkaw_dashboard/middlewares"
 	"yakkaw_dashboard/services"
 
 	"github.com/labstack/echo/v4"
-	
 )
 
 func Init(e *echo.Echo) {
@@ -16,6 +15,7 @@ func Init(e *echo.Echo) {
 
 	e.GET("/colorranges", ctrl.GetAll)
 	e.GET("/colorranges/:id", ctrl.GetByID)
+	e.GET("/color-ranges", ctrl.GetAll)
 
 	// Devices (READ public, WRITE admin)
 
@@ -89,8 +89,8 @@ func Init(e *echo.Echo) {
 	e.GET("/notifications", controllers.GetNotifications)
 	e.GET("/me", controllers.Me)
 
-    // 🔹 Places index (from sensor_data)
-    e.GET("/places", controllers.GetPlaces)
+	// 🔹 Places index (from sensor_data)
+	e.GET("/places", controllers.GetPlaces)
 
 	// 🔹 Pipeline controls (on-demand refresh)
 	e.GET("/pipeline/refresh", controllers.PipelineRefresh)
@@ -102,22 +102,39 @@ func Init(e *echo.Echo) {
 	e.GET("/api/airquality/one_month", airCtl.GetOneMonthDataHandler)
 	e.GET("/api/airquality/three_months", airCtl.GetThreeMonthsDataHandler)
 	e.GET("/api/airquality/one_year", airCtl.GetOneYearDataHandler)
-    e.GET("/api/airquality/province_average", airCtl.GetProvinceAveragePM25Handler)
+	e.GET("/api/airquality/province_average", airCtl.GetProvinceAveragePM25Handler)
 	e.GET("/api/airquality/sensor_data/week", airCtl.GetSensorData7DaysHandler)
-    // heat air quality data
-    e.GET("/api/airquality/one_year_series", controllers.GetAirQualityOneYearSeriesByAddress)
-    // Heatmap by province (province query param optional: if missing => aggregate all)
-    e.GET("/api/airquality/one_year_series_by_province", controllers.GetAirQualityOneYearSeriesByProvince)
+	// heat air quality data
+	e.GET("/api/airquality/one_year_series", controllers.GetAirQualityOneYearSeriesByAddress)
+	// Heatmap by province (province query param optional: if missing => aggregate all)
+	e.GET("/api/airquality/one_year_series_by_province", controllers.GetAirQualityOneYearSeriesByProvince)
 
 	// 🔹 Chart Data Route
 	chartDataController := controllers.NewChartDataController()
-    e.GET("/api/chartdata", chartDataController.GetChartDataHandler)
-    e.GET("/api/chartdata/today", chartDataController.GetTodayChartDataHandler)
-    e.GET("/api/chartdata/heatmap_one_year", chartDataController.GetHeatmapOneYearHandler)
+	e.GET("/api/chartdata", chartDataController.GetChartDataHandler)
+	e.GET("/api/chartdata/today", chartDataController.GetTodayChartDataHandler)
+	e.GET("/api/chartdata/heatmap_one_year", chartDataController.GetHeatmapOneYearHandler)
 
 	// 🔹 Get Latest Air Quality
 	e.GET("/api/airquality/latest", controllers.GetLatestAirQuality)
 
 	// Public QR consume endpoint (sets cookie then redirects to frontend)
 	e.GET("/qr/consume", controllers.ConsumeQRLogin)
+
+	chartCtl := controllers.NewChartDataController()
+	// ========== Chart Data ==========
+	// ใช้สำหรับกราฟตามช่วงเวลา เช่น 24 ชั่วโมง / 7 วัน / 30 วัน / 1 ปี
+	e.GET("/chart/data", chartCtl.GetChartDataHandler)
+
+	// ดึงข้อมูลของ "วันนี้" (เที่ยงคืนถึงปัจจุบัน)
+	e.GET("/chart/today", chartCtl.GetTodayChartDataHandler)
+
+	// ดึงข้อมูล heatmap 1 ปี (รายวัน) ต่อจังหวัด
+	e.GET("/chart/heatmap/year", chartCtl.GetHeatmapOneYearHandler)
+
+	// ========== Ranking ==========
+	// อันดับรายวัน สามารถจัดกลุ่มได้ด้วย ?group=address|place|province
+	// ตัวอย่าง: /chart/ranking/daily?date=2025-10-27&metric=pm25&group=place&limit=10
+	e.GET("/chart/ranking/daily", chartCtl.GetDailyRankingHandler)
+
 }

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from "react";
 import { News, Category } from "@/constant/newsData";
+import { api } from "../../utils/api";
 
 export const useNews = () => {
   const [categories, setCategories] = useState<Category[]>([]); // ✅ เก็บรายการหมวดหมู่
@@ -26,10 +27,8 @@ export const useNews = () => {
   // ✅ ฟังก์ชันดึง Categories จาก API
   const fetchCategories = async () => {
     try {
-      const response = await fetch("http://localhost:8080/categories");
-      if (!response.ok) throw new Error("Failed to fetch categories");
-      const data = await response.json();
-      setCategories(data || []);
+      const response = await api.get<Category[]>("/categories");
+      setCategories(response.data || []);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -37,8 +36,7 @@ export const useNews = () => {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("http://localhost:8080/me", { credentials: "include" });
-      if (!response.ok) throw new Error("Unauthorized");
+      await api.get("/me");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       window.location.href = "/login";
@@ -48,10 +46,8 @@ export const useNews = () => {
   const fetchNews = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:8080/news", { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch news");
-      const data = await response.json();
-      setNews(data || []);
+      const response = await api.get<News[]>("/news");
+      setNews(response.data || []);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -65,22 +61,11 @@ export const useNews = () => {
     console.log("Sending News Data:", currentNews); // ✅ Debug ดูค่าข้อมูลที่ส่ง
   
     try {
-      const response = await fetch("http://localhost:8080/admin/news", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          ...currentNews,
-          category_id: Number(currentNews.category_id), // ✅ แปลง category_id เป็น number
-          date: currentNews.date ? currentNews.date : new Date().toISOString(), // ✅ ตั้งค่า date เป็นปัจจุบันถ้าว่าง
-        }),
+      await api.post("/admin/news", {
+        ...currentNews,
+        category_id: Number(currentNews.category_id),
+        date: currentNews.date ? currentNews.date : new Date().toISOString(),
       });
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Failed to create news:", errorText);
-        throw new Error("Failed to create news: " + errorText);
-      }
   
       await fetchNews();
       setIsCreateDialogOpen(false);
@@ -96,18 +81,11 @@ export const useNews = () => {
     if (!currentNews.id) return;
   
     try {
-      const response = await fetch(`http://localhost:8080/admin/news/${currentNews.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          ...currentNews,
-          category_id: Number(currentNews.category_id), // ✅ แปลง category_id เป็น number
-          date: currentNews.date ? currentNews.date : new Date().toISOString(), // ✅ ตั้งค่า date เป็นปัจจุบันถ้าว่าง
-        }),
+      await api.put(`/admin/news/${currentNews.id}`, {
+        ...currentNews,
+        category_id: Number(currentNews.category_id),
+        date: currentNews.date ? currentNews.date : new Date().toISOString(),
       });
-
-      if (!response.ok) throw new Error("Failed to update news");
 
       await fetchNews();
       setIsEditDialogOpen(false);
@@ -122,12 +100,7 @@ export const useNews = () => {
     if (!newsToDelete) return;
 
     try {
-      const response = await fetch(`http://localhost:8080/admin/news/${newsToDelete}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete news");
+      await api.delete(`/admin/news/${newsToDelete}`);
 
       await fetchNews();
       setIsConfirmDialogOpen(false);

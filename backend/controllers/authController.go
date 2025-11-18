@@ -1,18 +1,15 @@
 package controllers
 
 import (
-    "net/http"
-    "os"
-    "time"
-    "yakkaw_dashboard/database"
-    "yakkaw_dashboard/models"
+	"net/http"
+	"time"
+	"yakkaw_dashboard/database"
+	"yakkaw_dashboard/models"
 
-    "github.com/golang-jwt/jwt/v4"
-    "github.com/labstack/echo/v4"
-    "golang.org/x/crypto/bcrypt"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 )
-
-var jwtSecret = []byte("your-secret-key")
 
 // Login - Handle user login by verifying password from the database
 // Login - Handle user login by verifying password from the database
@@ -40,79 +37,41 @@ func Login(c echo.Context) error {
 
 	// Generate token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(getJWTSecret())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Error generating token")
 	}
 
-    // Set token in HttpOnly cookie
-    cookie := new(http.Cookie)
-    cookie.Name = "access_token"
-    cookie.Value = tokenString
-    cookie.HttpOnly = true
-    // Prefer secure cookies in production
-    secure := os.Getenv("APP_ENV") == "production"
-    cookie.Secure = secure
-    // SameSite Lax for local dev across ports
-    cookie.SameSite = http.SameSiteLaxMode
-    cookie.Path = "/"
-    cookie.Expires = time.Now().Add(time.Hour * 2)
-    c.SetCookie(cookie)
+	// Set token in HttpOnly cookie with environment-aware security flags.
+	cookie := &http.Cookie{
+		Name:     "access_token",
+		Value:    tokenString,
+		Path:     "/",
+		HttpOnly: true,
+		Expires:  time.Now().Add(2 * time.Hour),
+		SameSite: http.SameSiteNoneMode,
+	}
+	configureAuthCookie(cookie)
+	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Login successful"})
 }
 
 // Logout - Clears the cookie
 func Logout(c echo.Context) error {
-    cookie := new(http.Cookie)
-    cookie.Name = "access_token"
-    cookie.Value = ""
-    cookie.HttpOnly = true
-    secure := os.Getenv("APP_ENV") == "production"
-    cookie.Secure = secure
-    cookie.SameSite = http.SameSiteLaxMode
-    cookie.Path = "/"
-    cookie.Expires = time.Unix(0, 0) // expire now
-    cookie.MaxAge = -1               // force delete
-    c.SetCookie(cookie)
+	cookie := &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Expires:  time.Unix(0, 0),       // expire now
+		MaxAge:   -1,                    // force delete
+		SameSite: http.SameSiteNoneMode, // always allow cross-site
+	}
+	configureAuthCookie(cookie)
+	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Logged out successfully"})
-}
-
-
-// Register - Creates a new user
-func Register(c echo.Context) error {
-	var userRequest models.User
-
-	// Bind request body to struct
-	if err := c.Bind(&userRequest); err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	// Hash the password before saving it
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userRequest.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Error hashing password")
-	}
-
-	// Set default role
-	if userRequest.Role == "" {
-		userRequest.Role = "user"
-	}
-
-	// If username is "admin", assign admin role
-	if userRequest.Username == "admin" {
-		userRequest.Role = "admin"
-	}
-
-	userRequest.Password = string(hashedPassword)
-
-	// Save user to database
-	if err := database.DB.Create(&userRequest).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, "Error registering user")
-	}
-
-	return c.JSON(http.StatusCreated, userRequest)
 }
 
 // Me - Check user authentication status
@@ -123,7 +82,7 @@ func Me(c echo.Context) error {
 	}
 
 	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
+		return getJWTSecret(), nil
 	})
 
 	if err != nil || !token.Valid {

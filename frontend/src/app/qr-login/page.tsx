@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, QrCode } from "lucide-react";
+import { api, FRONTEND_BASE_URL } from "../../../utils/api";
 
-const FRONTEND_REDIRECT = "http://localhost:3000/qr-create-device";
+const FRONTEND_REDIRECT = `${FRONTEND_BASE_URL}/qr-create-device`;
 
 export default function QRLoginPage() {
   const [qrUrl, setQrUrl] = useState<string>("");
@@ -22,12 +22,11 @@ export default function QRLoginPage() {
       setQrUrl("");
       setExpiresAt("");
 
-      const res = await axios.post(
-        "http://localhost:8080/admin/qr/generate",
+      const res = await api.post(
+        "/admin/qr/generate",
         {},
         {
           params: { redirect: FRONTEND_REDIRECT },
-          withCredentials: true,
         }
       );
       const { url, expires_at } = res.data || {};
@@ -96,4 +95,3 @@ export default function QRLoginPage() {
     </div>
   );
 }
-

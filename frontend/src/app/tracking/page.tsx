@@ -21,6 +21,7 @@ import { usePlaces } from "@/hooks/tracking/usePlaces";
 import { useNearbyPlaces } from "@/hooks/tracking/useNearbyPlaces";
 import { useCompareLastRange } from "@/hooks/tracking/useCompareLastRange";
 import { useAutoRefresh } from "@/hooks/tracking/useAutoRefresh";
+import { api, API_BASE_URL } from "../../../utils/api";
 // chart is rendered via <TrendChart /> component
 
 type ChartData = {
@@ -38,7 +39,7 @@ type OneYearSeriesItem = {
 const RANGES = ["Today", "24 Hour", "1 Week", "1 Month", "3 Month", "1 Year"] as const;
 type RangeType = (typeof RANGES)[number];
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+const API_BASE = API_BASE_URL;
 
 function toChartSeriesRows(chart: Partial<ChartData> | null | undefined, maxSeries = 5) {
   // Transform to array of objects suitable for recharts; tolerate null/undefined from API
@@ -99,9 +100,9 @@ export default function TrackingPage() {
     try {
       setSyncing(true);
       setSyncMessage(null);
-      const res = await fetch(`${API_BASE}/pipeline/refresh`);
-      const json = await res.json().catch(() => ({}));
-      if (res.ok) {
+      const res = await api.get("/pipeline/refresh");
+      const json = res.data || {};
+      if (res.status >= 200 && res.status < 300) {
         const processed = typeof json?.processed === 'number' ? json.processed : undefined;
         setSyncMessage(typeof processed === 'number' ? `Synced ${processed} records` : 'Sync complete');
         setLastSyncAt(Date.now());

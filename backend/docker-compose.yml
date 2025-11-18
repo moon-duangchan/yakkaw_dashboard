@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   go_app:
     build: .
@@ -9,21 +7,21 @@ services:
     depends_on:
       - postgres_db
     environment:
-      - DB_HOST=postgres_db
-      - DB_PORT=5432
-      - DB_USER=yakkaw
-      - DB_PASSWORD=1234
-      - DB_NAME=yakkaw_db
-      - SERVER_PORT=8080
+      DB_HOST: ${DB_HOST:-postgres_db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-yakkaw}
+      DB_PASSWORD: ${DB_PASSWORD:-1234}
+      DB_NAME: ${DB_NAME:-yakkaw_db}
+      SERVER_PORT: ${SERVER_PORT:-8080}
 
   postgres_db:
     image: postgres:latest
     container_name: postgres_db_container
     restart: always
     environment:
-      - POSTGRES_USER=yakkaw
-      - POSTGRES_PASSWORD=1234
-      - POSTGRES_DB=yakkaw_db
+      POSTGRES_USER: ${POSTGRES_USER:-${DB_USER:-yakkaw}}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-${DB_PASSWORD:-1234}}
+      POSTGRES_DB: ${POSTGRES_DB:-${DB_NAME:-yakkaw_db}}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

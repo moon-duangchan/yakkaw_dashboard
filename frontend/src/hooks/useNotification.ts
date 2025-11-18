@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect } from "react";
 import { Notification } from "@/constant/notificationData";
+import { api } from "../../utils/api";
 
 export const useNotifications = () => {
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
@@ -22,8 +23,7 @@ export const useNotifications = () => {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("http://localhost:8080/me", { credentials: "include" });
-      if (!response.ok) throw new Error("Unauthorized");
+      await api.get("/me");
     } catch (err) {
       window.location.href = "/login";
     }
@@ -32,10 +32,8 @@ export const useNotifications = () => {
   const fetchNotifications = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:8080/notifications", { credentials: "include" });
-      if (!response.ok) throw new Error("Failed to fetch notifications");
-      const data: Notification[] = await response.json();
-      setNotifications(data || []);
+      const response = await api.get<Notification[]>("/notifications");
+      setNotifications(response.data || []);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -46,13 +44,9 @@ export const useNotifications = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:8080/admin/notifications", {
-        method: "POST",
+      await api.post("/admin/notifications", currentNotification, {
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(currentNotification),
       });
-      if (!response.ok) throw new Error("Failed to create notification");
       await fetchNotifications();
       setIsCreateDialogOpen(false);
       setCurrentNotification({ id: null, title: "", message: "", icon: "" });
@@ -65,13 +59,9 @@ export const useNotifications = () => {
     e.preventDefault();
     if (!currentNotification.id) return;
     try {
-      const response = await fetch(`http://localhost:8080/admin/notifications/${currentNotification.id}`, {
-        method: "PUT",
+      await api.put(`/admin/notifications/${currentNotification.id}`, currentNotification, {
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(currentNotification),
       });
-      if (!response.ok) throw new Error("Failed to update notification");
       await fetchNotifications();
       setIsEditDialogOpen(false);
       setCurrentNotification({ id: null, title: "", message: "", icon: "" });
@@ -83,11 +73,7 @@ export const useNotifications = () => {
   const handleDelete = async () => {
     if (!notificationToDelete) return;
     try {
-      const response = await fetch(`http://localhost:8080/admin/notifications/${notificationToDelete}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to delete notification");
+      await api.delete(`/admin/notifications/${notificationToDelete}`);
       await fetchNotifications();
       setIsConfirmDialogOpen(false);
       setNotificationToDelete(null);

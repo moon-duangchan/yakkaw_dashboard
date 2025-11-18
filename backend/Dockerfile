@@ -16,14 +16,6 @@ COPY . .
 # สร้าง executable binary
 RUN go build -o main .
 
-# กำหนด environment variables
-ENV DB_HOST=postgres_db
-ENV DB_PORT=5432
-ENV DB_USER=yakkaw
-ENV DB_PASSWORD=1234
-ENV DB_NAME=yakkaw_db
-ENV SERVER_PORT=8080
-
 # เปิดเผยพอร์ตที่แอปพลิเคชัน Go ใช้
 EXPOSE 8080
 
