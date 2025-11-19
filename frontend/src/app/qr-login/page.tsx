@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, QrCode } from "lucide-react";
 import { api, FRONTEND_BASE_URL } from "../../../utils/api";
+import { getErrorMessage } from "../../../utils/error";
 
 const FRONTEND_REDIRECT = `${FRONTEND_BASE_URL}/qr-create-device`;
 
@@ -15,7 +17,7 @@ export default function QRLoginPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  const generateQR = async () => {
+  const generateQR = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -32,17 +34,16 @@ export default function QRLoginPage() {
       const { url, expires_at } = res.data || {};
       setQrUrl(url);
       setExpiresAt(expires_at);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || err?.response?.data?.error || "Failed to generate QR");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to generate QR"));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     generateQR();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [generateQR]);
 
   // Use a public QR image service to render the URL as QR code (no extra deps)
   const qrImgSrc = qrUrl
@@ -72,9 +73,11 @@ export default function QRLoginPage() {
               </div>
             ) : qrUrl ? (
               <>
-                <img
+                <Image
                   src={qrImgSrc}
                   alt="QR code for login"
+                  width={240}
+                  height={240}
                   className="border rounded-md p-2 bg-white"
                 />
                 <p className="text-sm text-gray-500">Expires at: {new Date(expiresAt).toLocaleString()}</p>

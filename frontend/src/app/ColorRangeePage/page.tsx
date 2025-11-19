@@ -9,6 +9,7 @@ import { useColorRanges } from "@/hooks/useColorRanges";
 import { FormDialog } from "@/components/ui/FormColorRangeeDialog";
 import { ConfirmDeleteDialog } from "@/components/ui/ConfirmDeleteDialog";
 import Navbar from "@/components/ui/Navbar";
+import type { ColorRange } from "@/constant/colorRangeData";
 
 const ColorRangePage: React.FC = () => {
   const {
@@ -28,6 +29,10 @@ const ColorRangePage: React.FC = () => {
     handleUpdate,
     handleDelete,
   } = useColorRanges();
+
+  const handleSetCurrentColorRange = (colorRange: ColorRange) => {
+    setCurrentColorRange(colorRange);
+  };
 
   if (isLoading) {
     return (
@@ -159,7 +164,7 @@ const ColorRangePage: React.FC = () => {
               onOpenChange={setIsCreateDialogOpen}
               onSubmit={handleCreate}
               colorRange={currentColorRange}
-              setColorRange={setCurrentColorRange}
+              setColorRange={handleSetCurrentColorRange}
               title="Create Color Range"
               submitButtonText="CREATE"
               existingRanges={colorRanges}
@@ -172,7 +177,7 @@ const ColorRangePage: React.FC = () => {
               onOpenChange={setIsEditDialogOpen}
               onSubmit={handleUpdate}
               colorRange={currentColorRange}
-              setColorRange={setCurrentColorRange}
+              setColorRange={handleSetCurrentColorRange}
               title="Edit Color Range"
               submitButtonText="UPDATE"
               existingRanges={colorRanges}

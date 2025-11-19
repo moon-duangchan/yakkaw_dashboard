@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Device } from "@/constant/deviceData";
 import { api } from "../../utils/api";
+import { getErrorMessage } from "../../utils/error";
 
 export const useDevices = () => {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -18,8 +19,8 @@ export const useDevices = () => {
       const response = await api.get<Device[]>("/devices");
       setDevices(response.data || []);
       setError("");
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to fetch devices"));
     } finally {
       setIsLoading(false);
     }
@@ -34,8 +35,8 @@ export const useDevices = () => {
       setIsCreateDialogOpen(false);
       setCurrentDevice(null);
       setError("");
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to create device"));
     }
   };
 
@@ -49,8 +50,8 @@ export const useDevices = () => {
       setIsEditDialogOpen(false);
       setCurrentDevice(null);
       setError("ใช้งานได้แค่เด้งมาให้ตกใจเล่น ๆ");
-    } catch (err: any) {
-      setError(err?.response?.data?.error || err.message);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to update device"));
     }
   };
 
@@ -62,8 +63,9 @@ export const useDevices = () => {
       setIsConfirmDialogOpen(false);
       setDeviceToDelete(null);
       setError("");
-    } catch (err: any) {
-      setError(err?.response?.data?.error || err.message);
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Failed to delete device");
+      setError(message);
       console.error("Delete device error:", err);
     }
   };

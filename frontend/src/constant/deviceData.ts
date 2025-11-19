@@ -1,5 +1,6 @@
 export type Device = {
-    id?: number; // corresponds to gorm.Model ID
+    ID?: number; // matches backend gorm.Model ID casing
+    id?: number; // legacy casing used in some components
     dvid: string;
     address: string;
     longitude: number;

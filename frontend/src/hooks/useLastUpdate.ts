@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../utils/api";
+import { getErrorMessage } from "../../utils/error";
 
 type LastUpdateResponse = {
   aqi: number;
@@ -24,8 +25,8 @@ export const useLastUpdate = (opts?: { refreshMs?: number; province?: string }) 
       const res = await api.get<LastUpdateResponse>("/api/airquality/latest", { params });
       setAqi(res.data?.aqi ?? null);
       setTimestamp(typeof res.data?.timestamp === "number" ? res.data.timestamp : null);
-    } catch (e: any) {
-      setError(e?.message || "Failed to fetch last update");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "Failed to fetch last update"));
     } finally {
       setLoading(false);
     }

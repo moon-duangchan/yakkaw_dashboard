@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import Chart from "chart.js/auto";
+import type { Chart as ChartJS, ChartConfiguration, ChartDataset, ChartOptions, ScriptableContext, TooltipItem } from "chart.js";
 import { MatrixController, MatrixElement } from "chartjs-chart-matrix";
 // Explicitly register the matrix controller/element so Chart.js recognizes the "matrix" type
 Chart.register(MatrixController, MatrixElement);
@@ -21,9 +22,11 @@ function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
+type MatrixPoint = { x: number; y: number; v?: number; t: number };
+
 export default function CalendarHeatmap({ start, end, data, title, className, showWeekdayLabels = true, metric = "pm25" }: CalendarHeatmapProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const chartRef = useRef<Chart | null>(null);
+  const chartRef = useRef<ChartJS<"matrix"> | null>(null);
 
   // Map of day(ms) -> value
   const valueMap = useMemo(() => {
@@ -102,8 +105,8 @@ export default function CalendarHeatmap({ start, end, data, title, className, sh
     if (!ctx) return;
 
     // Prepare matrix points
-    const points: Array<{ x: number; y: number; v?: number; t: number }> = [];
-    const { days, offset, totalWeeks } = layout;
+    const points: MatrixPoint[] = [];
+    const { days, offset } = layout;
     for (let i = 0; i < days.length; i++) {
       const d = days[i];
       const dow = new Date(d.date).getDay(); // 0..6
@@ -114,78 +117,95 @@ export default function CalendarHeatmap({ start, end, data, title, className, sh
     // Destroy previous
     chartRef.current?.destroy();
 
-    const chart = new Chart(ctx, {
+    const dataset: ChartDataset<"matrix", MatrixPoint[]> = {
+      label: "Heatmap",
+      data: points,
+      parsing: { xAxisKey: "x", yAxisKey: "y" },
+      width: (context: ScriptableContext<"matrix">) => {
+        const area = context.chart.chartArea;
+        if (!area) return 12;
+        return Math.max(8, Math.floor(area.width / Math.max(1, layout.totalWeeks)) - 4);
+      },
+      height: (context: ScriptableContext<"matrix">) => {
+        const area = context.chart.chartArea;
+        if (!area) return 12;
+        return Math.max(8, Math.floor(area.height / 7) - 4);
+      },
+      backgroundColor: (context: ScriptableContext<"matrix">) => {
+        const raw = context.raw as MatrixPoint | undefined;
+        return colorScale(raw?.v);
+      },
+      borderWidth: 0,
+      hoverBackgroundColor: (context: ScriptableContext<"matrix">) => {
+        const raw = context.raw as MatrixPoint | undefined;
+        return colorScale(raw?.v);
+      },
+    };
+
+    const options: ChartOptions<"matrix"> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items: TooltipItem<"matrix">[]) => {
+              const raw = items?.[0]?.raw as MatrixPoint | undefined;
+              if (!raw) return "";
+              return new Date(raw.t).toDateString();
+            },
+            label: (item: TooltipItem<"matrix">) => {
+              const raw = item.raw as MatrixPoint | undefined;
+              const value = raw?.v;
+              return value === undefined || Number.isNaN(value) ? "No data" : `${metric.toUpperCase()} ${value.toFixed(1)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          type: "linear",
+          position: "top",
+          min: -0.5,
+          max: Math.max(0, layout.totalWeeks - 0.5),
+          grid: { display: false },
+          ticks: {
+            stepSize: 1,
+            callback: (value) => {
+              const idx = typeof value === "number" ? value : Number(value);
+              return layout.monthLabels[Math.round(idx)] || "";
+            },
+            maxRotation: 0,
+            autoSkip: false,
+          },
+        },
+        y: {
+          type: "linear",
+          min: -0.5,
+          max: 6.5,
+          display: showWeekdayLabels,
+          grid: { display: false },
+          ticks: {
+            stepSize: 1,
+            callback: (value) => {
+              const idx = typeof value === "number" ? value : Number(value);
+              return ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][Math.round(idx)] || "";
+            },
+          },
+        },
+      },
+    };
+
+    const config: ChartConfiguration<"matrix", MatrixPoint[]> = {
       type: "matrix",
       data: {
-        datasets: [
-          {
-            label: "Heatmap",
-            data: points as any,
-            parsing: { xAxisKey: "x", yAxisKey: "y" },
-            width: (ctx: any) => {
-              const area = ctx.chart.chartArea;
-              if (!area) return 12;
-              return Math.max(8, Math.floor(area.width / (layout.totalWeeks || 1)) - 4);
-            },
-            height: (ctx: any) => {
-              const area = ctx.chart.chartArea;
-              if (!area) return 12;
-              return Math.max(8, Math.floor(area.height / 7) - 4);
-            },
-            backgroundColor: (ctx: any) => colorScale(ctx.raw?.v),
-            borderWidth: 0,
-            hoverBackgroundColor: (ctx: any) => colorScale(ctx.raw?.v),
-          } as any,
-        ],
+        datasets: [dataset],
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: (items: any) => {
-                const raw: any = items?.[0]?.raw;
-                if (!raw) return "";
-                return new Date(raw.t).toDateString();
-              },
-              label: (item: any) => {
-                const v: number | undefined = (item.raw as any)?.v;
-                return v === undefined || Number.isNaN(v) ? "No data" : `${metric.toUpperCase()} ${v.toFixed(1)}`;
-              },
-            },
-          },
-        },
-        scales: {
-          x: {
-            type: "linear",
-            position: "top",
-            min: -0.5,
-            max: Math.max(0, layout.totalWeeks - 0.5),
-            grid: { display: false },
-            ticks: {
-              stepSize: 1,
-              callback: (val: any) => layout.monthLabels[Math.round(val)] || "",
-              maxRotation: 0,
-              autoSkip: false,
-            },
-          },
-          y: {
-            type: "linear",
-            min: -0.5,
-            max: 6.5,
-            display: showWeekdayLabels,
-            grid: { display: false },
-            ticks: {
-              stepSize: 1,
-              callback: (v: any) => ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][Math.round(v)] || "",
-            },
-          },
-        },
-      } as any,
-    });
+      options,
+    };
+
+    const chart = new Chart(ctx, config);
     chartRef.current = chart;
 
     return () => {

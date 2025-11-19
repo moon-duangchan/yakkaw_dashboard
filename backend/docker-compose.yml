@@ -5,7 +5,9 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
       DB_HOST: ${DB_HOST:-postgres_db}
       DB_PORT: ${DB_PORT:-5432}
@@ -13,6 +15,11 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-1234}
       DB_NAME: ${DB_NAME:-yakkaw_db}
       SERVER_PORT: ${SERVER_PORT:-8080}
+      API_URL: ${API_URL:-https://yakkaw.mfu.ac.th/api/yakkaw/devices}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:3000}
+      QR_CONSUME_BASE_URL: ${QR_CONSUME_BASE_URL:-http://localhost:8080}
+      QR_DEFAULT_REDIRECT: ${QR_DEFAULT_REDIRECT:-http://localhost:3000/qr-create-device}
 
   postgres_db:
     image: postgres:latest
@@ -26,6 +33,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yakkaw} -d ${POSTGRES_DB:-yakkaw_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
 volumes:
   postgres_data:

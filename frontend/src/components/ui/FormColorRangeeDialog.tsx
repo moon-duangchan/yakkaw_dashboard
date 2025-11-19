@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,7 @@ export const FormDialog: React.FC<Props> = ({
     setColorRange({ ...colorRange, [name]: parsedValue });
   };
 
-  const isRangeInvalid = () => {
+  const isRangeInvalid = useCallback(() => {
     const min = Number(colorRange.min);
     const max = Number(colorRange.max);
 
@@ -88,7 +88,7 @@ export const FormDialog: React.FC<Props> = ({
     });
 
     return isDuplicateOrOverlap ? "This range duplicates or overlaps an existing range" : null;
-  };
+  }, [colorRange, existingRanges]);
 
   useEffect(() => {
     const errorMessage = isRangeInvalid();
@@ -100,7 +100,7 @@ export const FormDialog: React.FC<Props> = ({
       min: colorRange.min,
       max: colorRange.max,
     });
-  }, [colorRange.min, colorRange.max, existingRanges]);
+  }, [colorRange, existingRanges, isRangeInvalid]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

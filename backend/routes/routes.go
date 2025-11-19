@@ -28,7 +28,6 @@ func Init(e *echo.Echo) {
 	e.GET("/devices/:dvid", controllers.GetDevice)
 
 	// 🔹 Public Authentication Routes
-	e.POST("/register", controllers.Register)
 	e.POST("/login", controllers.Login)
 	e.POST("/logout", controllers.Logout)
 

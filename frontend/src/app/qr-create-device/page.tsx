@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Plus } from "lucide-react";
 import { api } from "../../../utils/api";
+import { getErrorMessage } from "../../../utils/error";
 
 type Device = {
   dvid: string;
@@ -59,8 +60,8 @@ export default function QRCreateDevicePage() {
       setSuccess("Device created successfully");
       // Optional: go to device list
       // router.push('/DevicePage');
-    } catch (err: any) {
-      setError(err?.response?.data?.error || err?.message || "Failed to create device");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Failed to create device"));
     } finally {
       setSubmitting(false);
     }

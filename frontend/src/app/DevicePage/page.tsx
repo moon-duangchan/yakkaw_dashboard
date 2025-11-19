@@ -29,8 +29,6 @@ const DevicePage: React.FC = () => {
     handleDelete,
   } = useDevices();
 
-  const [originalDvid, setOriginalDvid] = React.useState<string | null>(null);
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -169,7 +167,6 @@ const DevicePage: React.FC = () => {
                             className="bg-yellow-500 hover:bg-yellow-600 text-white text-xs"
                             onClick={() => {
                               setCurrentDevice(device);
-                              // setOriginalDvid(device.dvid); // เก็บ dvid เดิมไว้
                               setIsEditDialogOpen(true);
                             }}
                           >

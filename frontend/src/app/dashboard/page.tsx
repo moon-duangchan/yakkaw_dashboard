@@ -2,38 +2,21 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { 
-  Bell, 
-  Users, 
-  Loader2, 
-  TrendingUp, 
-  Calendar, 
-  ChevronUp, 
-  ChevronDown,
-  BarChartIcon,
-  Activity,
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Bell,
+  Users,
+  Loader2,
+  Calendar,
   Newspaper,
   FolderOpen,
-  Gift
+  Gift,
 } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotification";
 import { useSponsors } from "@/hooks/useSponsor";
 import { useNews } from "@/hooks/useNews";
 import { useCategories } from "@/hooks/useCategories";
 import Navbar from "@/components/ui/Navbar";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  CartesianGrid,
-  Legend
-} from "recharts";
 import DashNotificationCard from "@/components/ui/DashNotificationCard";
 import DashSponsorCard from "@/components/ui/DashSponsorsCard";
 import DashNewsCard from "@/components/ui/DashNewsCard";
@@ -44,27 +27,6 @@ const DashboardPage: React.FC = () => {
   const { filteredSponsors, isLoading: loadingSponsors } = useSponsors();
   const { filteredNews, isLoading: loadingNews } = useNews();
   const { categories, isLoading: loadingCategories } = useCategories();
-
-  // Mock data for the charts (replace with real data from your API)
-  const notificationTrends = [
-    { day: "Mon", count: 12, average: 10 },
-    { day: "Tue", count: 19, average: 12 },
-    { day: "Wed", count: 8, average: 9 },
-    { day: "Thu", count: 15, average: 11 },
-    { day: "Fri", count: 10, average: 10 },
-    { day: "Sat", count: 5, average: 6 },
-    { day: "Sun", count: 7, average: 7 },
-  ];
-
-  const sponsorTrends = [
-    { day: "Mon", count: 3, average: 2 },
-    { day: "Tue", count: 7, average: 4 },
-    { day: "Wed", count: 2, average: 3 },
-    { day: "Thu", count: 5, average: 4 },
-    { day: "Fri", count: 4, average: 3 },
-    { day: "Sat", count: 1, average: 2 },
-    { day: "Sun", count: 6, average: 3 },
-  ];
 
   // Animation variants
   const container = {
@@ -122,7 +84,7 @@ const DashboardPage: React.FC = () => {
                 Dashboard
               </h1>
               <p className="text-slate-600 mt-1">
-                Welcome back! Here's your activity overview
+                Welcome back! Here&rsquo;s your activity overview
               </p>
             </div>
             <div className="mt-4 lg:mt-0 flex items-center space-x-2 bg-white py-2 px-4 rounded-lg shadow-sm">

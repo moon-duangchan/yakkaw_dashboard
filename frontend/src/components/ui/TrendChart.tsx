@@ -12,11 +12,12 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
+import type { ChartRow } from "@/utils/tracking";
 
 type Metric = "pm25" | "pm10" | "aqi";
 
 type Props = {
-  rows: Array<Record<string, any>>;
+  rows: ChartRow[];
   series: string[];
   metric: Metric;
   loading?: boolean;
@@ -35,7 +36,7 @@ export default function TrendChart({ rows, series, metric, loading }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
             <XAxis dataKey="label" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 12 }} domain={[0, "auto"]} />
-            <Tooltip formatter={(v: any) => (typeof v === "number" ? v.toFixed(2) : v)} />
+            <Tooltip formatter={(value: number | string) => (typeof value === "number" ? value.toFixed(2) : value)} />
             <Legend />
             {metric === "pm25" && (
               <>
@@ -62,4 +63,3 @@ export default function TrendChart({ rows, series, metric, loading }: Props) {
     </div>
   );
 }
-

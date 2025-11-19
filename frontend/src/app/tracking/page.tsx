@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useDeferredValue, useMemo, useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -8,9 +8,6 @@ import PlaceSelect from "@/components/ui/PlaceSelect";
 import Navbar from "@/components/ui/Navbar";
 import { useLastUpdate } from "@/hooks/useLastUpdate";
 import CalendarHeatmap from "@/components/ui/CalendarHeatmap";
-import RangeToggle from "@/components/ui/RangeToggle";
-import MetricToggle from "@/components/ui/MetricToggle";
-import AutoRefreshSelect from "@/components/ui/AutoRefreshSelect";
 import TrendChart from "@/components/ui/TrendChart";
 import CompareChips from "@/components/ui/CompareChips";
 import TrackingControls from "@/components/tracking/TrackingControls";
@@ -22,46 +19,28 @@ import { useNearbyPlaces } from "@/hooks/tracking/useNearbyPlaces";
 import { useCompareLastRange } from "@/hooks/tracking/useCompareLastRange";
 import { useAutoRefresh } from "@/hooks/tracking/useAutoRefresh";
 import { api, API_BASE_URL } from "../../../utils/api";
+import { getErrorMessage } from "../../../utils/error";
 // chart is rendered via <TrendChart /> component
 
-type ChartData = {
-  labels: string[];
-  datasets: { label: string; data: number[] }[];
-};
-
-type OneYearSeriesItem = {
-  timestamp: number;
-  pm25?: number;
-  pm10?: number;
-  count: number;
-};
-
 const RANGES = ["Today", "24 Hour", "1 Week", "1 Month", "3 Month", "1 Year"] as const;
-type RangeType = (typeof RANGES)[number];
 
 const API_BASE = API_BASE_URL;
 
-function toChartSeriesRows(chart: Partial<ChartData> | null | undefined, maxSeries = 5) {
-  // Transform to array of objects suitable for recharts; tolerate null/undefined from API
-  const labels: string[] = Array.isArray(chart?.labels) ? (chart!.labels as string[]) : [];
-  const datasetsRaw: any[] = Array.isArray(chart?.datasets) ? (chart!.datasets as any[]) : [];
-  const activeDatasets = datasetsRaw
-    .filter((ds) => ds && typeof ds.label === "string" && Array.isArray(ds.data))
-    .slice(0, maxSeries);
-
-  const rows: Array<Record<string, any>> = [];
-  for (let idx = 0; idx < labels.length; idx++) {
-    const row: Record<string, any> = { label: labels[idx] };
-    for (const ds of activeDatasets) {
-      const v = ds.data[idx];
-      row[ds.label] = typeof v === "number" ? v : 0;
-    }
-    rows.push(row);
-  }
-  return { rows, series: activeDatasets.map((d) => d.label as string) };
+export default function TrackingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+          Loading tracking filters…
+        </div>
+      }
+    >
+      <TrackingPageContent />
+    </Suspense>
+  );
 }
 
-export default function TrackingPage() {
+function TrackingPageContent() {
   const [placeQuery, setPlaceQuery] = useState("");
   const [provinceQuery, setProvinceQuery] = useState("");
 
@@ -109,8 +88,8 @@ export default function TrackingPage() {
       } else {
         setSyncMessage(`Sync failed${json?.error ? `: ${json.error}` : ''}`);
       }
-    } catch (e: any) {
-      setSyncMessage(`Sync error: ${e?.message || 'unknown error'}`);
+    } catch (e: unknown) {
+      setSyncMessage(`Sync error: ${getErrorMessage(e, "unknown error")}`);
     } finally {
       // Bust caches via hooks and trigger refresh
       chartInvalidate();
@@ -178,8 +157,6 @@ export default function TrackingPage() {
   const provincePlaceCount = placesInProvince.length;
 
   // storage + URL sync handled by useTrackingFilters
-
-  const deferredPlaceQuery = useDeferredValue(placeQuery);
 
   // Province options from chart dataset labels (fallback from device addresses)
   const provinceOptions = useMemo(() => {

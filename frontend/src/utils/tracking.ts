@@ -1,25 +1,34 @@
+export type ChartDataset = { label: string; data: number[] };
 export type ChartData = {
   labels: string[];
-  datasets: { label: string; data: number[] }[];
+  datasets: ChartDataset[];
+};
+export type ChartRow = Record<string, number | string>;
+
+const isChartDataset = (value: unknown): value is ChartDataset => {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { label?: unknown; data?: unknown };
+  if (typeof candidate.label !== "string" || !Array.isArray(candidate.data)) return false;
+  return candidate.data.every((item) => typeof item === "number");
 };
 
 export function toChartSeriesRows(chart: Partial<ChartData> | null | undefined, maxSeries = 5) {
-  const labels: string[] = Array.isArray(chart?.labels) ? (chart!.labels as string[]) : [];
-  const datasetsRaw: any[] = Array.isArray(chart?.datasets) ? (chart!.datasets as any[]) : [];
-  const activeDatasets = datasetsRaw
-    .filter((ds) => ds && typeof ds.label === "string" && Array.isArray(ds.data))
-    .slice(0, maxSeries);
+  const labelCandidates: unknown[] = Array.isArray(chart?.labels) ? chart.labels ?? [] : [];
+  const labels = labelCandidates.filter((label): label is string => typeof label === "string");
+  const datasetCandidates: unknown[] = Array.isArray(chart?.datasets) ? (chart.datasets as unknown[]) : [];
+  const activeDatasets = datasetCandidates.filter(isChartDataset).slice(0, maxSeries);
 
-  const rows: Array<Record<string, any>> = [];
-  for (let idx = 0; idx < labels.length; idx++) {
-    const row: Record<string, any> = { label: labels[idx] };
+  const rows: ChartRow[] = [];
+  labels.forEach((label, index) => {
+    const row: ChartRow = { label };
     for (const ds of activeDatasets) {
-      const v = ds.data[idx];
-      row[ds.label] = typeof v === "number" ? v : 0;
+      const value = ds.data[index];
+      row[ds.label] = typeof value === "number" ? value : 0;
     }
     rows.push(row);
-  }
-  return { rows, series: activeDatasets.map((d) => d.label as string) };
+  });
+
+  return { rows, series: activeDatasets.map((dataset) => dataset.label) };
 }
 
 export function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }) {
@@ -32,4 +41,3 @@ export function haversineKm(a: { lat: number; lon: number }, b: { lat: number; l
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
-

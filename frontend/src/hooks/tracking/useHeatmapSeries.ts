@@ -55,13 +55,25 @@ export function useHeatmapSeries(params: {
         }
         const url = `${apiBase}/api/chartdata/heatmap_one_year?province=${encodeURIComponent(filter)}&metric=${encodeURIComponent(metric)}`;
         const res = await fetch(url, { signal });
-        const json: any = await res.json();
-        const values = json?.datasets?.[0]?.data || [];
-        const items: OneYearSeriesItem[] = (json?.labels || []).map((label: string, i: number) => ({
-          timestamp: new Date(label).getTime(),
-          pm25: typeof values[i] === "number" ? values[i] : undefined,
-          count: 1,
-        }));
+        if (!res.ok) {
+          throw new Error(`Failed to fetch heatmap data (${res.status})`);
+        }
+        const json: unknown = await res.json();
+        const parsed = json as { labels?: unknown; datasets?: unknown };
+        const labels = Array.isArray(parsed.labels)
+          ? parsed.labels.filter((label): label is string => typeof label === "string")
+          : [];
+        const values: unknown[] = Array.isArray(parsed.datasets) && parsed.datasets[0] && typeof parsed.datasets[0] === "object"
+          ? (((parsed.datasets[0] as { data?: unknown }).data as unknown[]) ?? [])
+          : [];
+        const items: OneYearSeriesItem[] = labels.map((label, i) => {
+          const rawValue = values?.[i];
+          return {
+            timestamp: new Date(label).getTime(),
+            pm25: typeof rawValue === "number" ? rawValue : undefined,
+            count: 1,
+          };
+        });
         setSeries(items);
         cacheRef.current.set(cacheKey, { at: Date.now(), data: items });
         while (cacheRef.current.size > CACHE_MAX) {
@@ -81,4 +93,3 @@ export function useHeatmapSeries(params: {
 
   return { series, loading, heatStart, heatEnd, invalidateCache } as const;
 }
-

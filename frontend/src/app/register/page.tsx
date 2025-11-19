@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Iridescence from '@/components/Iridescence';
 import { api } from "../../../utils/api";
+import { getErrorMessage } from "../../../utils/error";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -42,13 +43,8 @@ export default function RegisterPage() {
       });
       // Registration successful, redirect to login
       router.push('/login');
-    } catch (err) {
-      const message =
-        (err as any)?.response?.data?.error ||
-        (err as any)?.response?.data?.message ||
-        (err as Error)?.message ||
-        'Registration failed';
-      setError(message);
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Registration failed"));
     } finally {
       setIsLoading(false);
     }

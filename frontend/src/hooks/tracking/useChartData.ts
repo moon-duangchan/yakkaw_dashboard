@@ -1,9 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toChartSeriesRows, ChartData } from "@/utils/tracking";
+import { toChartSeriesRows, type ChartData, type ChartDataset } from "@/utils/tracking";
 
 type Metric = "pm25" | "pm10" | "aqi";
+
+const parseDatasets = (value: unknown): ChartDataset[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is ChartDataset => {
+    if (!item || typeof item !== "object") return false;
+    const candidate = item as { label?: unknown; data?: unknown };
+    if (typeof candidate.label !== "string" || !Array.isArray(candidate.data)) return false;
+    return candidate.data.every((entry) => typeof entry === "number");
+  });
+};
 
 export function useChartData(params: {
   apiBase: string;
@@ -53,12 +63,16 @@ export function useChartData(params: {
           params.set("metric", metric);
           if (filter) params.set("province", filter);
           const res = await fetch(`${apiBase}/api/chartdata?${params.toString()}`, { signal });
-          const json: any = await res.json();
-          const safeLabels: string[] = Array.isArray(json?.labels) ? json.labels : [];
-          const safeDatasets: { label: string; data: number[] }[] = Array.isArray(json?.datasets)
-            ? json.datasets.filter((d: any) => d && typeof d.label === "string" && Array.isArray(d.data))
+          if (!res.ok) {
+            throw new Error(`Failed to fetch chart data (${res.status})`);
+          }
+          const json: unknown = await res.json();
+          const parsed = json as { labels?: unknown; datasets?: unknown };
+          const safeLabels = Array.isArray(parsed.labels)
+            ? parsed.labels.filter((label): label is string => typeof label === "string")
             : [];
-          const data = { labels: safeLabels, datasets: safeDatasets } as ChartData;
+          const safeDatasets = parseDatasets(parsed.datasets);
+          const data: ChartData = { labels: safeLabels, datasets: safeDatasets };
           chartCacheRef.current.set(cacheKey, { at: Date.now(), data });
           while (chartCacheRef.current.size > CHART_CACHE_MAX) {
             const firstKey = chartCacheRef.current.keys().next().value as string | undefined;
@@ -103,4 +117,3 @@ export function useChartData(params: {
 
   return { chartData, rows, series, loading, invalidateCache } as const;
 }
-

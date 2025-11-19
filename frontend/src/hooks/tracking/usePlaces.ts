@@ -17,14 +17,20 @@ export function usePlaces(params: { apiBase: string; province: string }) {
       try {
         const url = `${apiBase}/places${province ? `?province=${encodeURIComponent(province)}` : ""}`;
         const res = await fetch(url, { signal });
-        const items: any[] = await res.json();
+        if (!res.ok) {
+          throw new Error(`Failed to fetch places (${res.status})`);
+        }
+        const json: unknown = await res.json();
+        const items = Array.isArray(json) ? json : [];
         const acc: PlaceItem[] = [];
         const seen = new Set<string>();
-        for (const d of items || []) {
-          const label = (d.label || d.place || d.address || '').toString().trim();
-          const address = (d.address || '').toString().trim();
-          const lat = Number(d.latitude ?? d.lat ?? d.Latitude);
-          const lon = Number(d.longitude ?? d.lon ?? d.Longitude);
+        for (const raw of items) {
+          if (!raw || typeof raw !== "object") continue;
+          const record = raw as Record<string, unknown>;
+          const label = (record.label ?? record.place ?? record.address ?? "").toString().trim();
+          const address = (record.address ?? "").toString().trim();
+          const lat = Number(record.latitude ?? record.lat ?? record.Latitude);
+          const lon = Number(record.longitude ?? record.lon ?? record.Longitude);
           if (!label) continue;
           const key = `${label}|${address}`;
           if (seen.has(key)) continue;
@@ -44,4 +50,3 @@ export function usePlaces(params: { apiBase: string; province: string }) {
 
   return { allPlaces, loadingPlaces } as const;
 }
-

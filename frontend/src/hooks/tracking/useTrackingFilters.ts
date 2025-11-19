@@ -3,7 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-type Metric = "pm25" | "pm10" | "aqi";
+const METRICS = ["pm25", "pm10", "aqi"] as const;
+type Metric = (typeof METRICS)[number];
+
+const isMetric = (value: string): value is Metric => (METRICS as readonly string[]).includes(value);
 
 export function useTrackingFilters(allowedRanges: readonly string[], defaults?: { range?: string; metric?: Metric }) {
   const router = useRouter();
@@ -21,7 +24,7 @@ export function useTrackingFilters(allowedRanges: readonly string[], defaults?: 
     const r = searchParams.get("range");
     if (r && allowedRanges.includes(r)) setRange(r);
     const m = searchParams.get("metric");
-    if (m && (["pm25", "pm10", "aqi"] as const).includes(m as any)) setMetric(m as Metric);
+    if (m && isMetric(m)) setMetric(m);
     const pv = searchParams.get("province") || "";
     const pl = searchParams.get("place") || "";
     if (pv) setProvince(pv);

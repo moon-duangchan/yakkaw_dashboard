@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   value: string;
   options: readonly string[];
-  onChange: (val: any) => void;
+  onChange: (val: string) => void;
   className?: string;
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import qs from 'qs';
 import { Loader2, Eye, EyeOff, User, Lock, LogIn } from "lucide-react";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Iridescence from '@/components/Iridescence';
 import { api } from "../../../utils/api";
+import { getErrorMessage } from "../../../utils/error";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -32,7 +33,7 @@ const LoginPage = () => {
     }
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -53,7 +54,7 @@ const LoginPage = () => {
     return true;
   };
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
   
     if (!validateForm()) return;
@@ -89,14 +90,9 @@ const LoginPage = () => {
       }
       
       router.push('/dashboard');
-    } catch (err) {
+    } catch (err: unknown) {
       setLoginAttempts(prev => prev + 1);
-      setError(
-        (err as any)?.response?.data?.message ||
-        (err as any)?.response?.data?.error ||
-        (err as Error)?.message ||
-        'Failed to login. Please check your credentials and try again.'
-      );
+      setError(getErrorMessage(err, 'Failed to login. Please check your credentials and try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -244,7 +240,7 @@ const LoginPage = () => {
               </div>
               
               <p className="text-center text-sm text-gray-600">
-                Don't have an account?{' '}
+                Don&rsquo;t have an account?{' '}
                 <Button 
                   variant="link" 
                   className="px-0 text-indigo-600 hover:text-indigo-800 font-medium"

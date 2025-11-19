@@ -84,6 +84,8 @@ const Navbar = () => {
         { href: "/sponsor", icon: Gift, label: "Sponsor" },
         { href: "/news", icon: Newspaper, label: "News" },
         { href: "/categories", icon: FolderOpen, label: "Categories" },
+        { href: "/qr-create-device", icon: FolderOpen, label: "Qr Code login" },
+
       ].map((link, index) => (
         <Link key={index} href={link.href}>
           <motion.div
