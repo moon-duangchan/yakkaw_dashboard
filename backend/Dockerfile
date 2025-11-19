@@ -1,23 +1,13 @@
-# ใช้ Go เวอร์ชั่นล่าสุดเป็น base image
-FROM golang:latest
+FROM gcr.io/distroless/base-debian12:nonroot
 
-# กำหนด working directory ภายใน container
 WORKDIR /app
 
-# คัดลอกไฟล์ go.mod และ go.sum เพื่อดาวน์โหลด dependencies
-COPY go.mod go.sum ./
+# Copy the pre-built Go binary. The project README notes `main` is generated via `go build`.
+COPY --chown=nonroot:nonroot main /app/main
 
-# ดาวน์โหลด dependencies ของโปรเจกต์
-RUN go mod download
-
-# คัดลอกซอร์สโค้ดทั้งหมดมาไว้ใน container
-COPY . .
-
-# สร้าง executable binary
-RUN go build -o main .
-
-# เปิดเผยพอร์ตที่แอปพลิเคชัน Go ใช้
+# Echo defaults to port 8080. Mirror it and ensure PORT is available for managed platforms.
+ENV PORT=8080
+ENV SERVER_PORT=8080
 EXPOSE 8080
 
-# คำสั่งสำหรับรันแอปพลิเคชัน
-CMD ["./main"]
+ENTRYPOINT ["/app/main"]
