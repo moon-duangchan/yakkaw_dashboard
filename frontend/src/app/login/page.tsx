@@ -24,6 +24,29 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        await api.get('/me', { timeout: 5000 });
+        if (!ignore) {
+          router.replace('/dashboard');
+        }
+      } catch {
+        // ignore users that are not authenticated yet
+      } finally {
+        if (!ignore) {
+          setIsCheckingSession(false);
+        }
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [router]);
 
   useEffect(() => {
     // Check for remembered credentials
@@ -78,6 +101,7 @@ const LoginPage = () => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
+          withCredentials: true,
           timeout: 10000,
         }
       );
@@ -88,7 +112,7 @@ const LoginPage = () => {
       } else {
         localStorage.removeItem('rememberedUsername');
       }
-      
+      setLoginAttempts(0);
       router.push('/dashboard');
     } catch (err: unknown) {
       setLoginAttempts(prev => prev + 1);
@@ -146,7 +170,7 @@ const LoginPage = () => {
                     placeholder="Enter your username"
                     value={formData.username}
                     onChange={handleInputChange}
-                    disabled={isLoading}
+                    disabled={isLoading || isCheckingSession}
                     className="pl-10 bg-gray-50 hover:bg-white focus:bg-white transition-colors border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-md"
                     required
                   />
@@ -176,7 +200,7 @@ const LoginPage = () => {
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    disabled={isLoading}
+                    disabled={isLoading || isCheckingSession}
                     className="pl-10 pr-10 bg-gray-50 hover:bg-white focus:bg-white transition-colors border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-md"
                     required
                   />
@@ -215,7 +239,7 @@ const LoginPage = () => {
               <Button 
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 h-11 rounded-md transition-colors"
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || isCheckingSession}
               >
                 {isLoading ? (
                   <>

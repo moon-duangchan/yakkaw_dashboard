@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Eye, EyeOff, User, Lock, LogIn } from "lucide-react";
+import { Loader2, Eye, EyeOff, User, Lock, LogIn, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,12 +22,23 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const redirectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeout.current) {
+        clearTimeout(redirectTimeout.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+    setSuccessMessage('');
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
@@ -38,11 +49,17 @@ export default function RegisterPage() {
 
     try {
       await api.post('/register', {
-        username: formData.username,
+        username: formData.username.trim(),
         password: formData.password,
+      }, { withCredentials: true });
+
+      setSuccessMessage('Account created successfully. Redirecting to login...');
+      setFormData({
+        username: '',
+        password: '',
+        confirmPassword: '',
       });
-      // Registration successful, redirect to login
-      router.push('/login');
+      redirectTimeout.current = setTimeout(() => router.push('/login'), 1500);
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Registration failed"));
     } finally {
@@ -56,6 +73,7 @@ export default function RegisterPage() {
       [e.target.name]: e.target.value,
     });
     setError('');
+    setSuccessMessage('');
   };
 
   return (
@@ -90,6 +108,12 @@ export default function RegisterPage() {
                 {error && (
                   <Alert variant="destructive" className="animate-pulse border border-red-200 bg-red-50 text-red-800">
                     <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                {successMessage && (
+                  <Alert className="border border-green-200 bg-green-50 text-green-800 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <AlertDescription>{successMessage}</AlertDescription>
                   </Alert>
                 )}
                 

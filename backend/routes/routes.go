@@ -30,6 +30,7 @@ func Init(e *echo.Echo) {
 	// 🔹 Public Authentication Routes
 	e.POST("/login", controllers.Login)
 	e.POST("/logout", controllers.Logout)
+	e.POST("/register", controllers.Register)
 
 	// 🔹 Instantiate services using the database connection
 	categoryService := services.NewCategoryService(database.DB)
