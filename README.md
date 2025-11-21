@@ -45,6 +45,11 @@ DB_USER=your_user
 DB_PASSWORD=your_password
 DB_NAME=yakkaw_db
 SERVER_PORT=8080
+API_URL=https://yakkaw.mfu.ac.th/api/yakkaw/devices
+JWT_SECRET=change_me
+REDIS_HOST=localhost
+REDIS_PORT=6379
+# REDIS_PASS= # optional
 ```
 
 ### Run Database Migrations
@@ -84,6 +89,11 @@ The server will be running at `http://localhost:8080`.
 ```sh
 docker-compose up --build
 ```
+
+## Caching
+- Redis is used for shared caching across instances (chart data, air-quality aggregates, rankings, places, latest AQI).
+- Provide `REDIS_HOST`, `REDIS_PORT`, and optional `REDIS_PASS` in `.env`.
+- Typical TTLs: chart data (30s–10m by range), heatmap (6h), rankings (30m), places (30m), air-quality aggregates (5–30m), latest AQI (15s).
 
 ## Contribution
 1. Fork the repository

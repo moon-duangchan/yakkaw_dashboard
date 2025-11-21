@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"yakkaw_dashboard/cache"
 	"yakkaw_dashboard/config"
 	"yakkaw_dashboard/database"
 	"yakkaw_dashboard/routes"
@@ -37,6 +38,11 @@ func main() {
 
 	// Initialize the database
 	database.Init()
+
+	// Initialize Redis (used for cross-instance caching)
+	if err := cache.InitRedis(cfg.RedisHost, cfg.RedisPort, cfg.RedisPassword); err != nil {
+		e.Logger.Fatalf("redis initialization failed: %v", err)
+	}
 
 	if err := seed.Run(database.DB); err != nil {
 		e.Logger.Fatalf("database seeding failed: %v", err)

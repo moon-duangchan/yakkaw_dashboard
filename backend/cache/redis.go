@@ -2,7 +2,7 @@ package cache
 
 import (
 	"context"
-	"os"
+	"fmt"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -10,21 +10,19 @@ import (
 var Ctx = context.Background()
 var Rdb *redis.Client
 
-func InitRedis() {
-	dbHost := os.Getenv("REDIS_HOST")     // เช่น "localhost"
-	dbPort := os.Getenv("REDIS_PORT")     // เช่น "6379"
-	dbPassword := os.Getenv("REDIS_PASS") // ถ้าไม่มี password ให้เว้นว่าง ""
-
-	addr := dbHost + ":" + dbPort
+// InitRedis wires a singleton Redis client with the provided connection info.
+func InitRedis(host, port, password string) error {
+	addr := fmt.Sprintf("%s:%s", host, port)
 
 	Rdb = redis.NewClient(&redis.Options{
 		Addr:     addr,
-		Password: dbPassword,
+		Password: password,
 		DB:       0,
 	})
 
-	// ทดสอบ connection
+	// Test connection eagerly so startup clearly fails if Redis is unreachable.
 	if err := Rdb.Ping(Ctx).Err(); err != nil {
-		panic("❌ Redis connection failed: " + err.Error())
+		return fmt.Errorf("redis ping failed: %w", err)
 	}
+	return nil
 }

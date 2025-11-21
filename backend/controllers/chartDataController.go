@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 
+	"yakkaw_dashboard/cache"
+	"yakkaw_dashboard/models"
 	"yakkaw_dashboard/services"
 
 	"github.com/labstack/echo/v4"
@@ -17,9 +19,7 @@ func NewChartDataController() *ChartDataController {
 	return &ChartDataController{}
 }
 
-var (
-	chartCache sync.Map // key: "range|province" -> struct{ at time.Time; data interface{} }
-)
+var ()
 
 func (ctl *ChartDataController) GetChartDataHandler(c echo.Context) error {
 	rangeType := c.QueryParam("range")
@@ -33,27 +33,17 @@ func (ctl *ChartDataController) GetChartDataHandler(c echo.Context) error {
 		metric = "pm25"
 	}
 
-	// Short-lived cache (30s) to reduce repeated heavy queries
-	cacheKey := rangeType + "|" + province + "|" + metric
-	if v, ok := chartCache.Load(cacheKey); ok {
-		if rec, ok2 := v.(struct {
-			at   time.Time
-			data interface{}
-		}); ok2 {
-			if time.Since(rec.at) < 30*time.Second {
-				return c.JSON(http.StatusOK, rec.data)
-			}
-		}
+	cacheKey := fmt.Sprintf("chart:data:%s:%s:%s", rangeType, province, metric)
+	var cached models.ChartData
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
 	}
 
 	chartData, err := services.GetChartData(rangeType, province, metric)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	chartCache.Store(cacheKey, struct {
-		at   time.Time
-		data interface{}
-	}{at: time.Now(), data: chartData})
+	_ = cache.SetJSON(cacheKey, chartData, chartDataTTL(rangeType))
 	return c.JSON(http.StatusOK, chartData)
 }
 
@@ -65,26 +55,17 @@ func (ctl *ChartDataController) GetTodayChartDataHandler(c echo.Context) error {
 	if metric == "" {
 		metric = "pm25"
 	}
-	cacheKey := "Today|" + province + "|" + metric
-	if v, ok := chartCache.Load(cacheKey); ok {
-		if rec, ok2 := v.(struct {
-			at   time.Time
-			data interface{}
-		}); ok2 {
-			if time.Since(rec.at) < 30*time.Second {
-				return c.JSON(http.StatusOK, rec.data)
-			}
-		}
+	cacheKey := fmt.Sprintf("chart:data:Today:%s:%s", province, metric)
+	var cached models.ChartData
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
 	}
 
 	chartData, err := services.GetChartData("Today", province, metric)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	chartCache.Store(cacheKey, struct {
-		at   time.Time
-		data interface{}
-	}{at: time.Now(), data: chartData})
+	_ = cache.SetJSON(cacheKey, chartData, chartDataTTL("Today"))
 	return c.JSON(http.StatusOK, chartData)
 }
 
@@ -98,26 +79,17 @@ func (ctl *ChartDataController) GetHeatmapOneYearHandler(c echo.Context) error {
 	if metric == "" {
 		metric = "pm25"
 	}
-	cacheKey := "HeatmapOneYear|" + province + "|" + metric
-	if v, ok := chartCache.Load(cacheKey); ok {
-		if rec, ok2 := v.(struct {
-			at   time.Time
-			data interface{}
-		}); ok2 {
-			if time.Since(rec.at) < 30*time.Second {
-				return c.JSON(http.StatusOK, rec.data)
-			}
-		}
+	cacheKey := fmt.Sprintf("chart:heatmap:1y:%s:%s", province, metric)
+	var cached models.ChartData
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
 	}
 
 	chartData, err := services.GetHeatmapOneYearDaily(province, metric)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	chartCache.Store(cacheKey, struct {
-		at   time.Time
-		data interface{}
-	}{at: time.Now(), data: chartData})
+	_ = cache.SetJSON(cacheKey, chartData, 6*time.Hour)
 	return c.JSON(http.StatusOK, chartData)
 }
 
@@ -155,17 +127,10 @@ func (ctl *ChartDataController) GetDailyRankingHandler(c echo.Context) error {
 		}
 	}
 
-	// cache key
-	cacheKey := "DailyRank|" + dateStr + "|" + metric + "|" + group + "|" + strconv.Itoa(limit)
-	if v, ok := chartCache.Load(cacheKey); ok {
-		if rec, ok2 := v.(struct {
-			at   time.Time
-			data interface{}
-		}); ok2 {
-			if time.Since(rec.at) < 30*time.Second {
-				return c.JSON(http.StatusOK, rec.data)
-			}
-		}
+	cacheKey := fmt.Sprintf("chart:rank:%s:%s:%s:%d", dateStr, metric, group, limit)
+	var cached []services.DailyRankRow
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
 	}
 
 	// เรียก service แบบ group-able
@@ -174,9 +139,21 @@ func (ctl *ChartDataController) GetDailyRankingHandler(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
-	chartCache.Store(cacheKey, struct {
-		at   time.Time
-		data interface{}
-	}{at: time.Now(), data: ranking})
+	_ = cache.SetJSON(cacheKey, ranking, 30*time.Minute)
 	return c.JSON(http.StatusOK, ranking)
+}
+
+func chartDataTTL(rangeType string) time.Duration {
+	switch rangeType {
+	case "Today", "24 Hour":
+		return 30 * time.Second
+	case "1 Week":
+		return time.Minute
+	case "1 Month":
+		return 3 * time.Minute
+	case "3 Month", "1 Year":
+		return 10 * time.Minute
+	default:
+		return 30 * time.Second
+	}
 }

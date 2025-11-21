@@ -18,6 +18,9 @@ type Config struct {
 	JWTSecret         string
 	QRConsumeBaseURL  string
 	QRDefaultRedirect string
+	RedisHost         string
+	RedisPort         string
+	RedisPassword     string
 }
 
 var (
@@ -43,6 +46,9 @@ func Get() *Config {
 			JWTSecret:         getRequiredEnv("JWT_SECRET"),
 			QRConsumeBaseURL:  getEnv("QR_CONSUME_BASE_URL", "http://localhost:8080"),
 			QRDefaultRedirect: getEnv("QR_DEFAULT_REDIRECT", "http://localhost:3000/qr-create-device"),
+			RedisHost:         getEnv("REDIS_HOST", "localhost"),
+			RedisPort:         getEnv("REDIS_PORT", "6379"),
+			RedisPassword:     getEnv("REDIS_PASS", ""),
 		}
 	})
 

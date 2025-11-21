@@ -1,13 +1,17 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
-	"sync"
+	"time"
+
+	"yakkaw_dashboard/cache"
+	"yakkaw_dashboard/database"
+	"yakkaw_dashboard/models"
+	"yakkaw_dashboard/services"
 
 	"github.com/labstack/echo/v4"
-	"yakkaw_dashboard/database"
-	"yakkaw_dashboard/services"
 )
 
 type AirQualityController struct{}
@@ -18,46 +22,81 @@ func NewAirQualityController() *AirQualityController {
 
 // Handler สำหรับดึงค่าเฉลี่ย 24 ชั่วโมง
 func (ctl *AirQualityController) GetOneDayDataHandler(c echo.Context) error {
+	cacheKey := "air:avg:24h"
+	var cached map[string]interface{}
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetAirQuality24Hours()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	_ = cache.SetJSON(cacheKey, data, 5*time.Minute)
 	return c.JSON(http.StatusOK, data)
 }
 
 // Handler สำหรับดึงค่าเฉลี่ย 1 สัปดาห์
 func (ctl *AirQualityController) GetOneWeekDataHandler(c echo.Context) error {
+	cacheKey := "air:avg:1w"
+	var cached map[string]interface{}
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetAirQualityOneWeek()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	_ = cache.SetJSON(cacheKey, data, 10*time.Minute)
 	return c.JSON(http.StatusOK, data)
 }
 
 // Handler สำหรับดึงค่าเฉลี่ย 1 เดือน
 func (ctl *AirQualityController) GetOneMonthDataHandler(c echo.Context) error {
+	cacheKey := "air:avg:1m"
+	var cached map[string]interface{}
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetAirQualityOneMonth()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	_ = cache.SetJSON(cacheKey, data, 15*time.Minute)
 	return c.JSON(http.StatusOK, data)
 }
 
 // Handler สำหรับดึงค่าเฉลี่ย 3 เดือน
 func (ctl *AirQualityController) GetThreeMonthsDataHandler(c echo.Context) error {
+	cacheKey := "air:avg:3m"
+	var cached map[string]interface{}
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetAirQualityThreeMonths()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	_ = cache.SetJSON(cacheKey, data, 30*time.Minute)
 	return c.JSON(http.StatusOK, data)
 }
 
 // Handler สำหรับดึงค่าเฉลี่ย 1 ปี
 func (ctl *AirQualityController) GetOneYearDataHandler(c echo.Context) error {
+	cacheKey := "air:avg:1y"
+	var cached map[string]interface{}
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetAirQualityOneYear()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	_ = cache.SetJSON(cacheKey, data, 30*time.Minute)
 	return c.JSON(http.StatusOK, data)
 }
 
@@ -67,6 +106,11 @@ func GetLatestAirQuality(c echo.Context) error {
 	var result struct {
 		AQI       int   `json:"aqi"`
 		Timestamp int64 `json:"timestamp"`
+	}
+
+	cacheKey := fmt.Sprintf("air:latest:%s", province)
+	if ok, err := cache.GetJSON(cacheKey, &result); err == nil && ok {
+		return c.JSON(http.StatusOK, result)
 	}
 
 	// สร้าง query สำหรับดึง record ล่าสุดจาก sensor_data โดยกรองด้วย address ที่มีชื่อจังหวัด
@@ -83,28 +127,41 @@ func GetLatestAirQuality(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"message": "Not Found"})
 	}
 
+	_ = cache.SetJSON(cacheKey, result, 15*time.Second)
 	return c.JSON(http.StatusOK, result)
 }
 
 // GetProvinceAveragePM25Handler ดึงค่าเฉลี่ย PM2.5 ของแต่ละจังหวัด
 func (ctl *AirQualityController) GetProvinceAveragePM25Handler(c echo.Context) error {
+	cacheKey := "air:province-avg:24h"
+	var cached []map[string]interface{}
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetProvinceAveragePM25()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	_ = cache.SetJSON(cacheKey, data, 20*time.Minute)
 	return c.JSON(http.StatusOK, data)
 }
 
 // GetSensorData7DaysHandler ดึงข้อมูล sensor_data ย้อนหลัง 7 วัน
 func (ctl *AirQualityController) GetSensorData7DaysHandler(c echo.Context) error {
+	cacheKey := "air:sensordata:7d"
+	var cached []models.SensorData
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetSensorData7Days()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	_ = cache.SetJSON(cacheKey, data, 15*time.Minute)
 	return c.JSON(http.StatusOK, data)
 }
-
-var cache sync.Map
 
 func GetAirQualityOneYearSeriesByAddress(c echo.Context) error {
 	address := strings.TrimSpace(c.QueryParam("address"))
@@ -112,12 +169,18 @@ func GetAirQualityOneYearSeriesByAddress(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "address is required"})
 	}
 
+	cacheKey := fmt.Sprintf("air:series:addr:%s", address)
+	var cached map[string]interface{}
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetAirQualityOneYearSeriesByAddress(address)
-	cache.Store(address, data)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
+	_ = cache.SetJSON(cacheKey, data, 6*time.Hour)
 	return c.JSON(http.StatusOK, data)
 }
 
@@ -128,9 +191,16 @@ func GetAirQualityOneYearSeriesByProvince(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "province is required"})
 	}
 
+	cacheKey := fmt.Sprintf("air:series:prov:%s", province)
+	var cached map[string]interface{}
+	if ok, err := cache.GetJSON(cacheKey, &cached); err == nil && ok {
+		return c.JSON(http.StatusOK, cached)
+	}
+
 	data, err := services.GetAirQualityOneYearSeriesByProvince(province)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
+	_ = cache.SetJSON(cacheKey, data, 6*time.Hour)
 	return c.JSON(http.StatusOK, data)
 }
