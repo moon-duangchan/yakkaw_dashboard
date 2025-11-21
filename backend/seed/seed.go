@@ -66,7 +66,7 @@ func Run(db *gorm.DB) error {
 		return fmt.Errorf("create admin user: %w", err)
 	}
 
-	logger.Infof("seeded admin user %q", adminUsername)
+	logger.Infof("seeded admin user %q", username)
 	return nil
 }
 
