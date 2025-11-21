@@ -63,6 +63,14 @@ go run main.go
 ```
 The server will be running at `http://localhost:8080`.
 
+## Database Seeding (Production)
+- What it does: after the backend connects to Postgres and applies GORM automigrations, it idempotently ensures an admin user exists with a bcrypt-hashed password.
+- How it runs: `main.go` calls `seed.Run(database.DB)` on startup (inside the container or locally); it skips automatically if the admin user already exists.
+- Configure admin credentials: set `ADMIN_USERNAME` and `ADMIN_PASSWORD` before starting the backend (required; no defaults are used in code—values are supplied via env).
+- Disable or extend seeding: set `SKIP_DB_SEED=true` to skip the seed step; to add more data, extend `seed/seed.go` with additional idempotent checks.
+- Verify via Docker logs: `docker compose logs go_app | grep -i seed`
+- Check with psql: `psql "$DB_NAME" -U "$DB_USER" -c "select username, role, created_at from users where username = '$ADMIN_USERNAME';"`
+
 ## API Endpoints
 ### Public Routes
 | Method | Endpoint           | Description |

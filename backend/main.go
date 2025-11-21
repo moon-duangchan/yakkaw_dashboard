@@ -8,6 +8,7 @@ import (
 	"yakkaw_dashboard/config"
 	"yakkaw_dashboard/database"
 	"yakkaw_dashboard/routes"
+	"yakkaw_dashboard/seed"
 	"yakkaw_dashboard/services"
 	"yakkaw_dashboard/utils"
 
@@ -37,9 +38,13 @@ func main() {
 	// Initialize the database
 	database.Init()
 
+	if err := seed.Run(database.DB); err != nil {
+		e.Logger.Fatalf("database seeding failed: %v", err)
+	}
+
 	// Enable CORS middleware (ของ Echo ต้องเรียกผ่าน echomw)
 	e.Use(echomw.CORSWithConfig(echomw.CORSConfig{
-		AllowOrigins:     cfg.AllowedOrigins, 
+		AllowOrigins:     cfg.AllowedOrigins,
 		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete, http.MethodOptions},
 		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderXRequestedWith, echo.HeaderAuthorization},
 		AllowCredentials: true,
