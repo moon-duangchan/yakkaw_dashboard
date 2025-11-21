@@ -1,77 +1,74 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import qs from 'qs';
-import { Loader2, Eye, EyeOff, User, Lock, LogIn } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, startTransition, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import { Loader2, Eye, EyeOff, User, Lock } from "lucide-react";
+import {
+  Card, CardContent, CardFooter, CardHeader, CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import Iridescence from '@/components/Iridescence';
-import { api } from "../../../utils/api";
-import { getErrorMessage } from "../../../utils/error";
+import qs from "qs";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api';
 
 const LoginPage = () => {
   const router = useRouter();
+  
+
   const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    rememberMe: false
+    username: "",
+    password: "",
+    rememberMe: false,
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [loginAttempts, setLoginAttempts] = useState(0);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const LOGIN_TIMEOUT_MS = 10000; // 10 seconds
 
   useEffect(() => {
-    let ignore = false;
-    (async () => {
-      try {
-        await api.get('/me', { timeout: 5000 });
-        if (!ignore) {
-          router.replace('/dashboard');
-        }
-      } catch {
-        // ignore users that are not authenticated yet
-      } finally {
-        if (!ignore) {
-          setIsCheckingSession(false);
-        }
-      }
-    })();
+    const savedUsername = localStorage.getItem("rememberedUsername");
+    if (savedUsername) {
+      setFormData((prev) => ({
+        ...prev,
+        username: savedUsername,
+        rememberMe: true,
+      }));
+    }
 
-    return () => {
-      ignore = true;
-    };
+    const hasAccessToken =
+      typeof document !== "undefined" &&
+      document.cookie
+        .split(";")
+        .some((cookie) => cookie.trim().startsWith("access_token="));
+
+    if (hasAccessToken) {
+      // Prefetch only when auth cookie exists to avoid caching redirect responses
+      router.prefetch("/dashboard");
+    }
   }, [router]);
 
-  useEffect(() => {
-    // Check for remembered credentials
-    const savedUsername = localStorage.getItem('rememberedUsername');
-    if (savedUsername) {
-      setFormData(prev => ({ ...prev, username: savedUsername, rememberMe: true }));
-    }
-  }, []);
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
-    setError('');
+    if (error) setError("");
   };
 
   const validateForm = () => {
     if (!formData.username.trim()) {
-      setError('Username is required');
+      setError("Username is required");
       return false;
     }
     if (!formData.password) {
-      setError('Password is required');
+      setError("Password is required");
       return false;
     }
     return true;
@@ -87,12 +84,12 @@ const LoginPage = () => {
       return;
     }
   
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError('');
   
     try {
-      await api.post(
-        '/login',
+      const response = await axios.post(
+        `${API_BASE_URL}/login`,
         qs.stringify({
           username: formData.username.trim(),
           password: formData.password,
@@ -101,125 +98,108 @@ const LoginPage = () => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          withCredentials: true,
           timeout: 10000,
+          withCredentials: true,
         }
       );
 
-      // Handle Remember Me functionality
       if (formData.rememberMe) {
-        localStorage.setItem('rememberedUsername', formData.username);
+        localStorage.setItem("rememberedUsername", formData.username);
       } else {
-        localStorage.removeItem('rememberedUsername');
+        localStorage.removeItem("rememberedUsername");
       }
-      setLoginAttempts(0);
-      router.push('/dashboard');
-    } catch (err: unknown) {
-      setLoginAttempts(prev => prev + 1);
-      setError(getErrorMessage(err, 'Failed to login. Please check your credentials and try again.'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  return (
-    <div className="min-h-screen relative">
-    <Iridescence
-      color={[1, 1, 1]}
-      mouseReact={false}
-      amplitude={0.1}
-      speed={1.0}
-      className="absolute inset-0 -z-10"
-    />
-    <div className="relative flex items-center justify-center top-32">
-      <div className="w-full max-w-md px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-indigo-600">Y A K K A W</h1>
-          <p className="text-gray-600 mt-2">Secure access to your account</p>
-        </div>
-        
-        <Card className="w-full shadow-xl border-0 overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-          <CardHeader className="space-y-1 pb-4 pt-6">
-            <CardTitle className="text-2xl font-bold text-center text-gray-800">
-              Login Yakkaw Admin
-            </CardTitle>
-            <CardDescription className="text-center text-gray-600">
-              Enter your credentials to access your account
-            </CardDescription>
-          </CardHeader>
-          
-          <form onSubmit={handleLogin}>
-            <CardContent className="space-y-5">
-              {error && (
-                <Alert variant="destructive" className="animate-pulse border border-red-200 bg-red-50 text-red-800">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-gray-700 font-medium">Username</Label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <User className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <Input
-                    id="username"
-                    name="username"
-                    type="text"
-                    placeholder="Enter your username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    disabled={isLoading || isCheckingSession}
-                    className="pl-10 bg-gray-50 hover:bg-white focus:bg-white transition-colors border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-md"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
-                  <Button 
-                    variant="link" 
-                    className="px-0 font-normal text-indigo-600 hover:text-indigo-800"
-                    type="button"
-                    onClick={() => router.push('/forgot-password')}
-                  >
-                    Forgot password?
-                  </Button>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <Lock className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    disabled={isLoading || isCheckingSession}
-                    className="pl-10 pr-10 bg-gray-50 hover:bg-white focus:bg-white transition-colors border-gray-200 hover:border-indigo-300 focus:border-indigo-500 rounded-md"
-                    required
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-500" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-500" />
-                    )}
-                  </Button>
-                </div>
-              </div>
 
+      // ใช้ transition เพื่อลดการ block UI ตอนเปลี่ยนหน้า
+      startTransition(() => {
+        router.push("/dashboard");
+      });
+    } catch (err: any) {
+  // แยกกรณี timeout vs credential ผิด
+  if (err.code === "ECONNABORTED") {
+    setError(`Login timed out after ${LOGIN_TIMEOUT_MS / 1000}s. Please try again.`);
+  } else if (err.response?.status === 401) {
+    setError("Invalid username or password.");
+  } else if (err.response) {
+    setError(err.response.data?.message ?? `Login failed (HTTP ${err.response.status}).`);
+  } else {
+    setError("Network error. Please check your connection.");
+  }
+  setIsSubmitting(false);
+}
+  };
+
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: "url('/assets/background.webp')" }}
+    >
+      <Card className="w-[90%] sm:w-[400px] bg-white/10 backdrop-blur-md text-white border border-white/20 shadow-lg rounded-xl p-6">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center font-bold">
+            Login Form
+          </CardTitle>
+        </CardHeader>
+
+        <form onSubmit={handleLogin}>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert
+                variant="destructive"
+                className="border border-red-300 bg-red-100 text-red-800"
+              >
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div>
+              <Label htmlFor="username">Enter your username</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-white/70" />
+                <Input
+                  id="username"
+                  name="username"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="pl-10 bg-white/10 text-white placeholder-white/60 border-white/30 focus:border-white focus:ring-white"
+                  autoComplete="username"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="password">Enter your password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-white/70" />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="pl-10 pr-10 bg-white/10 text-white placeholder-white/60 border-white/30 focus:border-white focus:ring-white"
+                  autoComplete="current-password"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-white/70" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-white/70" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-sm text-white">
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -227,62 +207,43 @@ const LoginPage = () => {
                   name="rememberMe"
                   checked={formData.rememberMe}
                   onChange={handleInputChange}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="accent-white"
                 />
-                <Label htmlFor="rememberMe" className="text-sm text-gray-600">
-                  Remember me
-                </Label>
+                <Label htmlFor="rememberMe">Remember me</Label>
               </div>
-            </CardContent>
-            
-            <CardFooter className="flex flex-col space-y-4 pt-2 pb-6">
-              <Button 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 h-11 rounded-md transition-colors"
-                type="submit"
-                disabled={isLoading || isCheckingSession}
+            </div>
+          </CardContent>
+
+          <CardFooter className="mt-4 flex flex-col gap-4">
+            <Button
+              type="submit"
+              className="w-full bg-white text-black hover:bg-gray-100 disabled:opacity-70"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Logging in...
+                </span>
+              ) : (
+                "Log In"
+              )}
+            </Button>
+
+            <p className="text-sm text-white text-center">
+              Don&apos;t have an account?{" "}
+              <Button
+                type="button"
+                variant="link"
+                className="px-0 text-indigo-500 hover:text-indigo-700 font-medium"
+                onClick={() => router.push("/register")}
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Sign in
-                  </>
-                )}
+                Register
               </Button>
-              
-              <div className="relative my-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-500">Or</span>
-                </div>
-              </div>
-              
-              <p className="text-center text-sm text-gray-600">
-                Don&rsquo;t have an account?{' '}
-                <Button 
-                  variant="link" 
-                  className="px-0 text-indigo-600 hover:text-indigo-800 font-medium"
-                  type="button"
-                  onClick={() => router.push('/register')}
-                >
-                  Sign up
-                </Button>
-              </p>
-            </CardFooter>
-          </form>
-        </Card>
-        
-        <p className="text-center text-xs text-gray-500 mt-8">
-          © {new Date().getFullYear()} YAKKAW. All rights reserved.
-        </p>
-      </div>
-      </div>
+            </p>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 };

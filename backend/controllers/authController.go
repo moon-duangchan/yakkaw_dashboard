@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"errors"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -12,165 +12,161 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
-var defaultJWTSecret = []byte("your-secret-key")
+var jwtSecret = []byte("your-secret-key")
 
-type loginRequest struct {
-	Username string `json:"username" form:"username"`
-	Password string `json:"password" form:"password"`
-}
-
-type registerRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
-}
-
-func getJWTSecret() []byte {
-	if secret := os.Getenv("JWT_SECRET"); secret != "" {
-		return []byte(secret)
-	}
-	return defaultJWTSecret
-}
-
-// Login verifies credentials and mints a JWT stored in an HttpOnly cookie.
-func Login(c echo.Context) error {
-	var req loginRequest
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid payload"})
+func shouldUseSecureCookie(c echo.Context) bool {
+	if proto := c.Request().Header.Get("X-Forwarded-Proto"); proto != "" {
+		return strings.EqualFold(proto, "https")
 	}
 
-	// Support both JSON and form submissions.
-	if req.Username == "" {
-		req.Username = c.FormValue("username")
-	}
-	if req.Password == "" {
-		req.Password = c.FormValue("password")
-	}
-
-	req.Username = strings.TrimSpace(req.Username)
-	if req.Username == "" || req.Password == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Username and password are required"})
-	}
-
-	var user models.User
-	if err := database.DB.Where("username = ?", req.Username).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Invalid username or password"})
+	if forwarded := c.Request().Header.Get("Forwarded"); forwarded != "" {
+		for _, part := range strings.Split(forwarded, ";") {
+			if strings.EqualFold(strings.TrimSpace(part), "proto=https") {
+				return true
+			}
+			if strings.EqualFold(strings.TrimSpace(part), "proto=http") {
+				return false
+			}
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Unable to fetch user"})
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Invalid username or password"})
+	for _, header := range []string{echo.HeaderOrigin, "Referer"} {
+		if raw := c.Request().Header.Get(header); raw != "" {
+			if u, err := url.Parse(raw); err == nil {
+				if strings.EqualFold(u.Scheme, "https") {
+					return true
+				}
+				if strings.EqualFold(u.Scheme, "http") {
+					return false
+				}
+			}
+		}
 	}
 
+	if c.Request().TLS != nil || strings.EqualFold(c.Scheme(), "https") {
+		return true
+	}
+
+	env := os.Getenv("APP_ENV")
+	return strings.EqualFold(env, "production")
+}
+
+// Login - Handle user login by verifying password from the database
+// Login - Handle user login by verifying password from the database
+func Login(c echo.Context) error {
+	type loginRequest struct {
+		Username string `json:"username" form:"username"`
+		Password string `json:"password" form:"password"`
+	}
+
+	payload := loginRequest{
+		Username: c.FormValue("username"),
+		Password: c.FormValue("password"),
+	}
+
+	if payload.Username == "" || payload.Password == "" {
+		if err := c.Bind(&payload); err != nil {
+			return c.JSON(http.StatusBadRequest, "Invalid login payload")
+		}
+	}
+
+	payload.Username = strings.TrimSpace(payload.Username)
+
+	if payload.Username == "" || payload.Password == "" {
+		return c.JSON(http.StatusBadRequest, "Username and password are required")
+	}
+
+	// Find user in the database
+	var user models.User
+	if err := database.DB.Where("username = ?", payload.Username).First(&user).Error; err != nil {
+		return c.JSON(http.StatusUnauthorized, "Invalid username or password")
+	}
+
+	// Compare password with the hash in the database
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password)); err != nil {
+		return c.JSON(http.StatusUnauthorized, "Invalid username or password")
+	}
+
+	// Create JWT claims
 	claims := jwt.MapClaims{
 		"username": user.Username,
 		"role":     user.Role,
-		"exp":      time.Now().Add(2 * time.Hour).Unix(),
+		"exp":      time.Now().Add(time.Hour * 2).Unix(),
 	}
 
+	// Generate token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(getJWTSecret())
+	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Unable to generate token"})
+		return c.JSON(http.StatusInternalServerError, "Error generating token")
 	}
 
+	// Set token in HttpOnly cookie
 	cookie := new(http.Cookie)
 	cookie.Name = "access_token"
 	cookie.Value = tokenString
 	cookie.HttpOnly = true
+	cookie.Secure = shouldUseSecureCookie(c)
 	cookie.Path = "/"
-	cookie.Expires = time.Now().Add(2 * time.Hour)
-	cookie.SameSite = http.SameSiteLaxMode
-	cookie.Secure = os.Getenv("APP_ENV") == "production"
+	cookie.Expires = time.Now().Add(time.Hour * 2)
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Login successful"})
 }
 
-// Logout clears the auth cookie.
+// Logout - Clears the cookie
 func Logout(c echo.Context) error {
 	cookie := new(http.Cookie)
 	cookie.Name = "access_token"
 	cookie.Value = ""
 	cookie.HttpOnly = true
+	cookie.Secure = shouldUseSecureCookie(c) // ต้องใช้ HTTPS
 	cookie.Path = "/"
-	cookie.Expires = time.Unix(0, 0)
-	cookie.MaxAge = -1
-	cookie.SameSite = http.SameSiteLaxMode
-	cookie.Secure = os.Getenv("APP_ENV") == "production"
+	cookie.Expires = time.Unix(0, 0) // หมดอายุทันที
+	cookie.MaxAge = -1               // บังคับให้ลบ
 	c.SetCookie(cookie)
 
 	return c.JSON(http.StatusOK, map[string]string{"message": "Logged out successfully"})
 }
 
-// Register creates a new account with a hashed password.
+// Register - Creates a new user
 func Register(c echo.Context) error {
-	var req registerRequest
-	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid payload"})
+	var userRequest models.User
+
+	// Bind request body to struct
+	if err := c.Bind(&userRequest); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	// Support form submissions as well.
-	if req.Username == "" {
-		req.Username = c.FormValue("username")
-	}
-	if req.Password == "" {
-		req.Password = c.FormValue("password")
-	}
-	if req.Role == "" {
-		req.Role = c.FormValue("role")
-	}
-
-	req.Username = strings.TrimSpace(req.Username)
-	if req.Username == "" || req.Password == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Username and password are required"})
-	}
-
-	// Ensure username is unique.
-	var existing models.User
-	if err := database.DB.Where("username = ?", req.Username).First(&existing).Error; err == nil {
-		return c.JSON(http.StatusConflict, map[string]string{"message": "Username already exists"})
-	} else if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Unable to check existing users"})
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	// Hash the password before saving it
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Unable to hash password"})
+		return c.JSON(http.StatusInternalServerError, "Error hashing password")
 	}
 
-	role := strings.TrimSpace(req.Role)
-	if role == "" {
-		role = "user"
-	}
-	// Grant admin role explicitly only when username is admin to preserve current behavior.
-	if req.Username == "admin" {
-		role = "admin"
+	// Set default role
+	if userRequest.Role == "" {
+		userRequest.Role = "user"
 	}
 
-	user := models.User{
-		Username: req.Username,
-		Password: string(hashedPassword),
-		Role:     role,
+	// If username is "admin", assign admin role
+	if userRequest.Username == "admin" {
+		userRequest.Role = "admin"
 	}
 
-	if err := database.DB.Create(&user).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Error registering user"})
+	userRequest.Password = string(hashedPassword)
+
+	// Save user to database
+	if err := database.DB.Create(&userRequest).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, "Error registering user")
 	}
 
-	return c.JSON(http.StatusCreated, map[string]string{
-		"username": user.Username,
-		"role":     user.Role,
-		"message":  "Registration successful",
-	})
+	return c.JSON(http.StatusCreated, userRequest)
 }
 
-// Me returns the authenticated user's profile if the token is valid.
+// Me - Check user authentication status
 func Me(c echo.Context) error {
 	cookie, err := c.Cookie("access_token")
 	if err != nil {
@@ -178,8 +174,9 @@ func Me(c echo.Context) error {
 	}
 
 	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
-		return getJWTSecret(), nil
+		return jwtSecret, nil
 	})
+
 	if err != nil || !token.Valid {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Invalid token"})
 	}
