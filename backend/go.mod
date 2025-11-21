@@ -1,6 +1,6 @@
 module yakkaw_dashboard
 
-go 1.23.0
+go 1.22.0
 
 require (
 	github.com/didip/tollbooth/v7 v7.0.2
