@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"yakkaw_dashboard/cache"
 	"yakkaw_dashboard/config"
 	"yakkaw_dashboard/database"
 	"yakkaw_dashboard/routes"
@@ -14,7 +13,7 @@ import (
 	"yakkaw_dashboard/utils"
 
 	"github.com/labstack/echo/v4"
-	echomw "github.com/labstack/echo/v4/middleware" // 👈 ของ Echo ตั้ง alias เป็น echomw
+	echomw "github.com/labstack/echo/v4/middleware"
 )
 
 type CacheItem struct {
