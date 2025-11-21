@@ -2,7 +2,7 @@
 
 import { useState, useEffect, startTransition, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Loader2, Eye, EyeOff, User, Lock } from "lucide-react";
 import {
   Card, CardContent, CardFooter, CardHeader, CardTitle,
@@ -88,7 +88,7 @@ const LoginPage = () => {
     setError('');
   
     try {
-      const response = await axios.post(
+      await axios.post(
         `${API_BASE_URL}/login`,
         qs.stringify({
           username: formData.username.trim(),
@@ -98,7 +98,7 @@ const LoginPage = () => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          timeout: 10000,
+          timeout: LOGIN_TIMEOUT_MS,
           withCredentials: true,
         }
       );
@@ -113,19 +113,23 @@ const LoginPage = () => {
       startTransition(() => {
         router.push("/dashboard");
       });
-    } catch (err: any) {
-  // แยกกรณี timeout vs credential ผิด
-  if (err.code === "ECONNABORTED") {
-    setError(`Login timed out after ${LOGIN_TIMEOUT_MS / 1000}s. Please try again.`);
-  } else if (err.response?.status === 401) {
-    setError("Invalid username or password.");
-  } else if (err.response) {
-    setError(err.response.data?.message ?? `Login failed (HTTP ${err.response.status}).`);
-  } else {
-    setError("Network error. Please check your connection.");
-  }
-  setIsSubmitting(false);
-}
+      setLoginAttempts(0);
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+
+      if (axiosError.code === "ECONNABORTED") {
+        setError(`Login timed out after ${LOGIN_TIMEOUT_MS / 1000}s. Please try again.`);
+      } else if (axiosError.response?.status === 401) {
+        setError("Invalid username or password.");
+      } else if (axiosError.response) {
+        setError(axiosError.response.data?.message ?? `Login failed (HTTP ${axiosError.response.status}).`);
+      } else {
+        setError("Network error. Please check your connection.");
+      }
+
+      setLoginAttempts((prev) => prev + 1);
+      setIsSubmitting(false);
+    }
   };
 
   return (
