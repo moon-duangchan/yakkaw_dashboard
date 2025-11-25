@@ -26,7 +26,7 @@ const LoginPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [loginAttempts] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const LOGIN_TIMEOUT_MS = 10000; // 10 seconds
@@ -88,7 +88,7 @@ const LoginPage = () => {
     setError('');
   
     try {
-      const response = await axios.post(
+      await axios.post(
         `${API_BASE_URL}/login`,
         qs.stringify({
           username: formData.username.trim(),
@@ -113,19 +113,28 @@ const LoginPage = () => {
       startTransition(() => {
         router.push("/dashboard");
       });
-    } catch (err: any) {
-  // แยกกรณี timeout vs credential ผิด
-  if (err.code === "ECONNABORTED") {
-    setError(`Login timed out after ${LOGIN_TIMEOUT_MS / 1000}s. Please try again.`);
-  } else if (err.response?.status === 401) {
-    setError("Invalid username or password.");
-  } else if (err.response) {
-    setError(err.response.data?.message ?? `Login failed (HTTP ${err.response.status}).`);
-  } else {
-    setError("Network error. Please check your connection.");
-  }
-  setIsSubmitting(false);
-}
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (err.code === "ECONNABORTED") {
+          setError(
+            `Login timed out after ${LOGIN_TIMEOUT_MS / 1000}s. Please try again.`,
+          );
+        } else if (err.response?.status === 401) {
+          setError("Invalid username or password.");
+        } else if (err.response) {
+          setError(
+            err.response.data?.message
+              ?? `Login failed (HTTP ${err.response.status}).`,
+          );
+        } else {
+          setError("Network error. Please check your connection.");
+        }
+      } else {
+        setError("Unexpected error. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
