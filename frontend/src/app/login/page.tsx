@@ -12,6 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { api } from "../../../utils/api";
+import { getErrorMessage } from "../../../utils/error";
+
+type DebugInfo = {
+  status?: number;
+  code?: string;
+  requestUrl?: string;
+  backendMessage?: string;
+  message?: string;
+};
 
 const LoginPage = () => {
   const router = useRouter();
@@ -24,6 +33,7 @@ const LoginPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [loginAttempts] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -84,6 +94,7 @@ const LoginPage = () => {
   
     setIsSubmitting(true);
     setError('');
+    setDebugInfo(null);
   
     try {
       await api.post(
@@ -108,24 +119,45 @@ const LoginPage = () => {
         router.push("/dashboard");
       });
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        if (err.code === "ECONNABORTED") {
+      const axiosError = axios.isAxiosError(err) ? err : null;
+      const requestUrl = axiosError?.config?.baseURL
+        ? `${axiosError.config.baseURL}${axiosError.config.url ?? ""}`
+        : axiosError?.config?.url;
+
+      setDebugInfo({
+        status: axiosError?.response?.status,
+        code: axiosError?.code,
+        requestUrl,
+        backendMessage:
+          (axiosError?.response?.data as { message?: string; error?: string })?.message
+          ?? (axiosError?.response?.data as { message?: string; error?: string })?.error,
+        message: axiosError?.message ?? getErrorMessage(err),
+      });
+
+      if (axiosError) {
+        if (axiosError.code === "ECONNABORTED") {
           setError(
             `Login timed out after ${LOGIN_TIMEOUT_MS / 1000}s. Please try again.`,
           );
-        } else if (err.response?.status === 401) {
+        } else if (axiosError.code === "ERR_NETWORK") {
+          const target = axiosError.config?.baseURL ?? "the backend";
+          setError(`Cannot reach ${target}. Ensure the API is running and CORS allows this origin.`);
+        } else if (axiosError.response?.status === 401) {
           setError("Invalid username or password.");
-        } else if (err.response) {
+        } else if (axiosError.response) {
           setError(
-            err.response.data?.message
-              ?? `Login failed (HTTP ${err.response.status}).`,
+            (axiosError.response.data as { message?: string; error?: string })?.message
+              ?? (axiosError.response.data as { message?: string; error?: string })?.error
+              ?? `Login failed (HTTP ${axiosError.response.status}).`,
           );
         } else {
-          setError("Network error. Please check your connection.");
+          setError(getErrorMessage(err, "Network error. Please check your connection."));
         }
       } else {
-        setError("Unexpected error. Please try again.");
+        setError(getErrorMessage(err, "Unexpected error. Please try again."));
       }
+
+      console.error("Login error", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -151,6 +183,25 @@ const LoginPage = () => {
                 className="border border-red-300 bg-red-100 text-red-800"
               >
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {debugInfo && (
+              <Alert className="border border-blue-200 bg-blue-50 text-slate-800">
+                <AlertDescription className="space-y-1">
+                  <p className="font-semibold">Debug details</p>
+                  <p className="text-xs break-words">
+                    Status: {debugInfo.status ?? "n/a"} | Code: {debugInfo.code ?? "n/a"}
+                  </p>
+                  {debugInfo.requestUrl && (
+                    <p className="text-xs break-words">URL: {debugInfo.requestUrl}</p>
+                  )}
+                  {debugInfo.backendMessage && (
+                    <p className="text-xs break-words">Backend: {debugInfo.backendMessage}</p>
+                  )}
+                  {debugInfo.message && (
+                    <p className="text-xs break-words">Message: {debugInfo.message}</p>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
 
