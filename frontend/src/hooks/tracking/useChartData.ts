@@ -16,7 +16,7 @@ const parseDatasets = (value: unknown): ChartDataset[] => {
 };
 
 export function useChartData(params: {
-  apiBase: string;
+  apiBase?: string;
   range: string;
   metric: Metric;
   effectiveFilter: string;
@@ -53,6 +53,11 @@ export function useChartData(params: {
     const { signal } = controller;
     const run = async () => {
       setLoading(true);
+      if (!apiBase) {
+        setChartData({ labels: [], datasets: [] });
+        setLoading(false);
+        return;
+      }
       try {
         const fetchOne = async (filter: string) => {
           const cacheKey = `${range}|${filter}|${metric}`;

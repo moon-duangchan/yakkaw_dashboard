@@ -11,7 +11,7 @@ export type OneYearSeriesItem = {
 type Metric = "pm25" | "pm10" | "aqi";
 
 export function useHeatmapSeries(params: {
-  apiBase: string;
+  apiBase?: string;
   filter: string; // place or province
   metric: Metric;
   refreshTick: number;
@@ -38,6 +38,10 @@ export function useHeatmapSeries(params: {
     const controller = new AbortController();
     const { signal } = controller;
     const run = async () => {
+      if (!apiBase) {
+        setSeries([]);
+        return;
+      }
       if (!filter) {
         setSeries([]);
         return;

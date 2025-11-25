@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 export type PlaceItem = { label: string; place: string; address: string; lat: number; lon: number };
 
-export function usePlaces(params: { apiBase: string; province: string }) {
+export function usePlaces(params: { apiBase?: string; province: string }) {
   const { apiBase, province } = params;
   const [allPlaces, setAllPlaces] = useState<PlaceItem[]>([]);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
@@ -13,6 +13,10 @@ export function usePlaces(params: { apiBase: string; province: string }) {
     const controller = new AbortController();
     const { signal } = controller;
     const run = async () => {
+      if (!apiBase) {
+        setAllPlaces([]);
+        return;
+      }
       setLoadingPlaces(true);
       try {
         const url = `${apiBase}/places${province ? `?province=${encodeURIComponent(province)}` : ""}`;

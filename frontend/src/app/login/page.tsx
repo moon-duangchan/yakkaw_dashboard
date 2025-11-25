@@ -52,6 +52,7 @@ const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const apiBaseMissing = !API_BASE_URL;
   const apiDisplay = (() => {
     if (!API_BASE_URL) return "API base URL not set";
     try {
@@ -124,6 +125,10 @@ const LoginPage = () => {
     setIsSubmitting(true);
 
     try {
+      if (apiBaseMissing) {
+        setError("API base URL not configured. Set NEXT_PUBLIC_API_BASE_URL and rebuild.");
+        return;
+      }
       await api.post(
         "/login",
         {
@@ -172,7 +177,7 @@ const LoginPage = () => {
     }
   };
 
-  const disableForm = isSubmitting || isCheckingSession;
+  const disableForm = isSubmitting || isCheckingSession || apiBaseMissing;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
@@ -185,6 +190,13 @@ const LoginPage = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/85 to-slate-950" />
 
       <div className="relative max-w-5xl mx-auto px-4 py-12 md:py-16">
+        {apiBaseMissing && (
+          <Alert variant="destructive" className="mb-6 bg-red-900/30 border-red-700 text-red-100">
+            <AlertDescription>
+              Backend URL is not configured. Set <code className="font-mono">NEXT_PUBLIC_API_BASE_URL</code> and restart the dev server.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-4">
             <Image

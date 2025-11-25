@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 
-export function useCompareLastRange(params: { apiBase: string; selectedPlaces: string[]; refreshTick: number }) {
+export function useCompareLastRange(params: { apiBase?: string; selectedPlaces: string[]; refreshTick: number }) {
   const { apiBase, selectedPlaces, refreshTick } = params;
   const [compareLastRange, setCompareLastRange] = useState<{ min?: number; max?: number } | null>(null);
 
   useEffect(() => {
     let aborted = false;
     const run = async () => {
+      if (!apiBase) {
+        setCompareLastRange(null);
+        return;
+      }
       if (selectedPlaces.length === 0) {
         setCompareLastRange(null);
         return;
@@ -41,4 +45,3 @@ export function useCompareLastRange(params: { apiBase: string; selectedPlaces: s
 
   return compareLastRange;
 }
-
