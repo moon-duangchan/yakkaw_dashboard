@@ -11,9 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import qs from "qs";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api';
+import { api } from "@/utils/api";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -88,19 +86,15 @@ const LoginPage = () => {
     setError('');
   
     try {
-      await axios.post(
-        `${API_BASE_URL}/login`,
-        qs.stringify({
+      await api.post(
+        "/login",
+        {
           username: formData.username.trim(),
           password: formData.password,
-        }),
+        },
         {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          timeout: 10000,
-          withCredentials: true,
-        }
+          timeout: LOGIN_TIMEOUT_MS,
+        },
       );
 
       if (formData.rememberMe) {
