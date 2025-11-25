@@ -52,6 +52,14 @@ const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const apiDisplay = (() => {
+    try {
+      const url = new URL(API_BASE_URL);
+      return url.host + (url.pathname !== "/" ? url.pathname : "");
+    } catch {
+      return API_BASE_URL;
+    }
+  })();
 
   useEffect(() => {
     const savedUsername = localStorage.getItem("rememberedUsername");
@@ -217,7 +225,7 @@ const LoginPage = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
                   { icon: Sparkles, label: "JWT cookie auth", tone: "border-indigo-300/60 bg-indigo-500/10" },
-                  { icon: Wifi, label: "Backend: /login @ 8080", tone: "border-cyan-300/60 bg-cyan-500/10" },
+                  { icon: Wifi, label: `Backend: ${apiDisplay}`, tone: "border-cyan-300/60 bg-cyan-500/10" },
                 ].map((item, idx) => (
                   <div
                     key={idx}
@@ -240,7 +248,7 @@ const LoginPage = () => {
             </CardContent>
             <CardFooter className="text-xs text-slate-400">
               Your credentials are sent over HTTPS in production; in development, the API expects
-              <span className="mx-1 font-semibold text-white">http://localhost:8080</span>.
+              <span className="mx-1 font-semibold text-white">{API_BASE_URL}</span>.
             </CardFooter>
           </Card>
 
