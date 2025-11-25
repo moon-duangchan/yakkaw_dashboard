@@ -52,6 +52,8 @@ REDIS_PORT=6379
 # REDIS_PASS= # optional
 ```
 
+> Note: This README covers the Go API only. If you run the full stack from the repo root, also create `.env` files for `yakkaw_dashboard/frontend` and `aj-b-yak` from their `.env.example` files, and a root-level `.env` (for Docker Compose) from `.env.example`.
+
 ### Run Database Migrations
 ```sh
 go run cmd/migrate/main.go up
