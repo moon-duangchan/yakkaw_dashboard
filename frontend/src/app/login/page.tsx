@@ -53,6 +53,7 @@ const LoginPage = () => {
   const [attempts, setAttempts] = useState(0);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   const apiDisplay = (() => {
+    if (!API_BASE_URL) return "API base URL not set";
     try {
       const url = new URL(API_BASE_URL);
       return url.host + (url.pathname !== "/" ? url.pathname : "");
